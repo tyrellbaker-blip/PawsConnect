@@ -15,7 +15,7 @@ def user_login(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('landing_page')  # Redirect to the landing page upon successful login
+                return redirect('UserManagement:landing_page')  # Redirect to the landing page upon successful login
             else:
                 # Add a non-field error to the form for login failure
                 form.add_error(None, "Invalid username or password")

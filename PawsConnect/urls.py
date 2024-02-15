@@ -15,15 +15,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.contrib.auth.views import LogoutView
 
 from UserManagement.views import user_login, home, register, landing_page
 
 urlpatterns = [
+    path('UserManagement/', include(('UserManagement.urls', 'UserManagement'), namespace='UserManagement')),
     path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('landing_page/', landing_page, name='landing_page'),  # Set the landing page as the root URL
-      # Move the home page to a separate URL
+    path('landing/', landing_page, name='landing_page'),
     path('register/', register, name='register'),
     path('login/', user_login, name='login'),
+    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+
 ]

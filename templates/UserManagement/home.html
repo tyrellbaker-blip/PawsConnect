@@ -9,6 +9,10 @@
     
     <!-- Example content and buttons -->
     <div class="mt-4">
+        <form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-link">Logout</button>
+</form>
     </div>
 </div>
 {% endblock %}
