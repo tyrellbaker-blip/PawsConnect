@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    ...
+    <!-- Bootstrap CSS -->
+    ...
+    <style>
+        body {
+            background-color: #343a40;  /* Dark background */
+            color: #ffffff;  /* Light text */
+        }
+        .navbar-dark .navbar-nav .nav-link {
+            color: #ffffff;  /* Light link text */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">  <!-- Dark theme navbar -->
+            <a class="navbar-brand" href="{% url 'home' %}">My Site</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+                    <li class="nav-item"><a class="btn btn-secondary" href="{% url 'login' %}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    <main class="container mt-4">
+        {% block content %}{% endblock %}
+    </main>
+    ...
+</body>
+</html>
