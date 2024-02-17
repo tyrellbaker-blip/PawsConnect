@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ user.username }}'s Profile</h1>
+    <p>Email: {{ user.email }}</p>
+    <p>Join date: {{ user.date_joined }}</p>
+    <!-- Add more user details here -->
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+/* styles.css: contains all styles for both UserManagement and SocialInteraction apps */
+
+/* General app CSS rules */
+body {
+    background-color: #f5f5f5;  /* Light grey background */
+    color: #000;  /* Black text */
+}
+
+/* UserManagement app CSS rules */
+.user-profile {
+    background-color: #ffffff;  /* White background for user profiles */
+    color: #000;  /* Black text */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;  /* Light grey border around profiles */
+}
+
+.user-profile h2, .user-profile h3, .user-profile h4 {
+    color: #000;  /* Black headers in user profiles */
+}
+
+/* SocialInteraction app CSS rules */
+.post {
+    background-color: #ffffff;  /* White background for posts */
+    color: #000;  /* Black text */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;  /* Light grey border around posts */
+}
+
+.post h2, .post h3, .post h4 {
+    color: #000;  /* Black headers in posts */
+}
+
+.comment {
+    background-color: #f8f8f8;  /* Very light grey background for comments */
+    color: #000;  /* Black text */
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+.comment h3, .comment h4 {
+    color: #000;  /* Black headers in comments */
+}

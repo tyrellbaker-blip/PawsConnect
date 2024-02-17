@@ -6,7 +6,7 @@
 <div class="container mt-5">
     <div class="bg-dark p-4 rounded">
         <h2 class="text-light">Login</h2>
-        <form method="post" class="text-light">
+        <form method="post" action="{% url 'UserManagement:login' %}" class="text-light">
             {% csrf_token %}
             {{ form.as_p }}
             {% if form.non_field_errors %}
