@@ -22,6 +22,13 @@ class CustomLoginForm(forms.Form):
 
 
 class UserRegistrationForm(UserCreationForm):
+    preferred_language = forms.ChoiceField(choices=[
+        ('en', 'English'),
+        ('es', 'Spanish'),
+        ('fr', 'French'),
+        ('zh', 'Chinese (Mandarin)')
+    ], widget=forms.Select(attrs={'class': 'form-control'}))
+
     class Meta:
         model = get_user_model()
         fields = ['username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language', 'password1',
@@ -31,10 +38,15 @@ class UserRegistrationForm(UserCreationForm):
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['email', 'display_name', 'profile_picture', 'location', 'preferred_language']
+        fields = ['username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language']
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'display_name': forms.TextInput(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'preferred_language': forms.TextInput(attrs={'class': 'form-control'}),
+            'preferred_language': forms.Select(choices=[
+                ('en', 'English'),
+                ('es', 'Spanish'),
+                ('fr', 'French'),
+                ('zh', 'Chinese (Mandarin)')
+            ], attrs={'class': 'form-control'}),
         }
