@@ -1,15 +1,8 @@
-from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm
-
-
-from django import forms
-from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm
+from .models import CustomUser
 
 
 class CustomLoginForm(forms.Form):
@@ -27,8 +20,21 @@ class CustomLoginForm(forms.Form):
             )
         return cleaned_data
 
+
 class UserRegistrationForm(UserCreationForm):
     class Meta:
         model = get_user_model()
         fields = ['username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language', 'password1',
                   'password2']
+
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'display_name', 'profile_picture', 'location', 'preferred_language']
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'display_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'preferred_language': forms.TextInput(attrs={'class': 'form-control'}),
+        }
