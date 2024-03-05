@@ -31,14 +31,14 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = get_user_model()
-        fields = ['username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language', 'password1',
+        fields = ['first_name', 'last_name', 'username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language', 'password1',
                   'password2']
 
 
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language']
+        fields = ['first_name', 'last_name', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language']
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'display_name': forms.TextInput(attrs={'class': 'form-control'}),
