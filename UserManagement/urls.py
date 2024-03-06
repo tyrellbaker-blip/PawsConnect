@@ -12,5 +12,9 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('landing/', views.landing_page, name='landing_page'),
     path('profile/', views.profile, name='profile'),
+    path('connections/', views.connections, name='connections'),
+    path('index/', views.index, name='index'),
+    path('network/', views.network, name='network'),
+
     # Other URL patterns...
 ]

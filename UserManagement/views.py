@@ -1,10 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-from .forms import CustomLoginForm, UserRegistrationForm  # Make sure this import matches the location of your LoginForm
-
+from SocialInteraction.models import Friendship
+from django.core.serializers import serialize
+import json
 
 def user_login(request):
     print("Login view function called")
@@ -33,6 +32,7 @@ def user_login(request):
         form = CustomLoginForm()
     return render(request, 'UserManagement/login.html', {'form': form})
 
+
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
@@ -44,10 +44,20 @@ def register(request):
         form = UserRegistrationForm()
     return render(request, 'UserManagement/register.html', {'form': form})
 
+def network(request):
+    friendships_qs = Friendship.objects.filter(is_active=True).values('from_user_id', 'to_user_id')
+    friendships_json = json.dumps(list(friendships_qs))
+    return render(request, 'UserManagement/network.html', {'friendships_json': friendships_json})
+
+
 
 @login_required
 def landing_page(request):
     return redirect('UserManagement:landing_page')
+
+
+def index(request):
+    return render(request, 'UserManagement/index.html', {'user': request.user})
 
 
 def home(request):
@@ -57,7 +67,11 @@ def home(request):
 def logout(request):
     return redirect('UserManagement:logout')
 
-
-@login_required
+#login required
 def profile(request):
     return render(request, 'UserManagement/profile.html', {'user': request.user})
+
+#login required
+def connections(request):
+    return render(request, 'UserManagement/connections.html', {'user': request.user})
+

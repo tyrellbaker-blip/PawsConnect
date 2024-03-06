@@ -1,19 +1,27 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}PawsConnect{% endblock %}
 
 {% block content %}
-<div class="container mt-5 text-dark">
-    <h1 class="display-4">Welcome Home!</h1>
-    <p class="">Hello, {{ user.username }}. Here's what's new:</p>
-    
-    <!-- Example content and buttons -->
-    <div class="mt-4">
-        <form action="{% url 'UserManagement:logout' %}" method="post">
+<div class="container">
+    <div class="hero">
+        <h1>Welcome to PawsConnect</h1>
+        <p>Join our vibrant community of pet lovers. Share, connect, and discover the world of pets together.</p>
+    </div>
 
-    {% csrf_token %}
-    <button type="submit" class="btn btn-link">Logout</button>
-</form>
+    <div class="features">
+        <div class="feature">
+            <h2>Pet Profiles</h2>
+            <p>Create and maintain profiles for your pets, share their stories, and more.</p>
+        </div>
+        <div class="feature">
+            <h2>Connections</h2>
+            <p>Connect with other pet lovers, find friends for your pets, and join the community.</p>
+        </div>
+        <div class="feature">
+            <h2>Discover</h2>
+            <p>Explore pet profiles, discover new connections, and enjoy the vast world of pet enthusiasts.</p>
+        </div>
     </div>
 </div>
 {% endblock %}

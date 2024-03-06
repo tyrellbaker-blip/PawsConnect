@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections - PawsConnect</title>
+    <link rel="stylesheet" href="{% static 'UserManagement/styles.css' %}" type="text/css">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <main>
+        <section class="connections-section">
+            <h2>Your Connections</h2>
+            <div id="network-graph"></div>
+        </section>
+    </main>
+
+    <script src="{% static 'js/network-graph.js' %}"></script>
+    <script>
+        //  'friendships' is passed to the template context as a list of links
+        var friendships = {{ friendships|safe }};
+
+        // Call a function to build the graph, defined in 'network-graph.js'
+        buildNetworkGraph(friendships);
+    </script>
+</body>
+</html>
+{% endblock content %}
