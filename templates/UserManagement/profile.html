@@ -1,12 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h1>{{ user.username }}'s Profile</h1>
-    {% if user.is_authenticated %}
-    <a href="{% url 'UserManagement:edit_profile' %}">Edit Profile</a>
-    <p>Email: {{ user.email }}</p>
-    <p>Join date: {{ user.date_joined }}</p>
-
-{% endif %}
+    <div class="row">
+    
+    
+        <div class="col-md-9">
+            <h1>{{ user.username }}'s Profile</h1>
+            {% if user.bio %}
+            <p>Bio: {{ user.bio }}</p>
+            {% endif %}
+            {% if user.location %}
+            <p>Location: {{ user.location }}</p>
+            {% endif %}
+            
+            <hr> 
+        
+            {% if user.is_authenticated %}
+            <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+            <p>Email: {{ user.email }}</p>
+            <p>Join date: {{ user.date_joined }}</p>
+                
+            <div class="btn-group" role="group" aria-label="User actions">
+                <a href="{% url 'UserManagement:pets' %}" class="btn btn-primary">Pets</a>
+                <a href="{% url 'UserManagement:friends' %}" class="btn btn-primary">Friends</a>
+                <a href="{% url 'UserManagement:photos' %}" class="btn btn-primary">Photos</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
