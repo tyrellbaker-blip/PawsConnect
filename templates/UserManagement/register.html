@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-dark">Register</h1>
-    <form method="post" enctype="multipart/form-data" class="p-3 rounded" style="background-color: black;">
+    <form method="post" enctype="multipart/form-data" class="p-3 rounded" style="background-color: orange;">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" class="btn btn-primary">Register</button>
