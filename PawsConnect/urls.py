@@ -14,6 +14,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -23,9 +25,9 @@ from django.contrib.auth.views import LogoutView
 from UserManagement.views import user_login, home, register, landing_page
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('user/', include('UserManagement.urls', namespace='UserManagement')),
-    # Redirect the root URL to the 'home' view within the UserManagement namespace
-    path('', lambda request: redirect('UserManagement:login')),  # Redirect the root URL
-path('social/', include('SocialInteraction.urls')),
-]
+                  path('admin/', admin.site.urls),
+                  path('user/', include('UserManagement.urls', namespace='UserManagement')),
+                  # Redirect the root URL to the 'home' view within the UserManagement namespace
+                  path('', lambda request: redirect('UserManagement:login')),  # Redirect the root URL
+                  path('social/', include('SocialInteraction.urls')),
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
