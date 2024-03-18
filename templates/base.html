@@ -9,6 +9,7 @@
     {% load static %}
     <!-- Main CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css'  %}">
+<link rel="stylesheet" type="text/css" href="{% static 'UserManagement/styles.css'  %}">
 </head>
 <body>
     <header>
@@ -29,10 +30,16 @@
     <main class="container mt-4">
         {% block content %}{% endblock %}
     </main>
-    
+
     <!-- Bootstrap JS, Popper.js, and jQuery -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<hr/>
+    <footer>
+    <img id="csumb_logo" src="{{ MEDIA_URL }}logo.png" alt="CSUMB Logo">
+    <p>CST438. 2024 ⒸLuciano, Baker, Rodas, Grimaldo</p>
+</footer>
 </body>
 </html>

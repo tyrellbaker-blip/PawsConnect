@@ -1,0 +1,123 @@
+/* styles.css: contains all styles for both UserManagement and css apps */
+
+/* General app CSS rules */
+body {
+    background-color: #f5f5f5;  /* Light grey background */
+    color: #000;  /* Black text */
+}
+
+/* UserManagement app CSS rules */
+.user-profile {
+    background-color: #ffffff;  /* White background for user profiles */
+    color: #000;  /* Black text */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;  /* Light grey border around profiles */
+}
+
+.user-profile h2, .user-profile h3, .user-profile h4 {
+    color: #000;  /* Black headers in user profiles */
+}
+
+/* css app CSS rules */
+.post {
+    background-color: #ffffff;  /* White background for posts */
+    color: #000;  /* Black text */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;  /* Light grey border around posts */
+}
+
+.post h2, .post h3, .post h4 {
+    color: #000;  /* Black headers in posts */
+}
+
+.comment {
+    background-color: #f8f8f8;  /* Very light grey background for comments */
+    color: #000;  /* Black text */
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+.comment h3, .comment h4 {
+    color: #000;  /* Black headers in comments */
+}
+.registration-form {
+    color: white;
+}
+
+.registration-form input,
+.registration-form textarea,
+.registration-form select {
+    background-color: #fff; /* Light background for form fields */
+    color: #333; /* Dark text for input */
+}
+/* Homepage specific styles for a bright, happy, and airy theme */
+.homepage-welcome {
+    color: #2E7D32; /* Cheerful green for the welcome message */
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.homepage-description {
+    text-align: left;
+    color: #424242; /* Dark grey for readable text */
+    font-size: 1.2rem;
+    line-height: 1.5;
+}
+
+.homepage-aside {
+    text-align: right; /* Aligns content to the right */
+}
+
+.homepage-aside img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px; /* Soft rounded corners for the image */
+    margin-bottom: 1rem;
+}
+
+/* Styles for buttons on the homepage */
+.homepage-button {
+    display: inline-block;
+    background-color: #FFEB3B; /* Bright yellow for button background */
+    color: #000; /* Black text for better readability */
+    padding: 10px 20px;
+    border-radius: 20px; /* Rounded edges for a softer look */
+    text-transform: uppercase;
+    font-weight: bold;
+    margin: 5px; /* Spacing between buttons */
+    text-decoration: none; /* Removes underline from links */
+    box-shadow: 0px 8px 15px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s; /* Smooth transition for click effect */
+}
+
+.homepage-button:hover {
+    transform: translateY(-2px); /* Slight raise effect on hover */
+}
+
+img#csumb_logo {
+  width: 25%;
+}
+
+footer {
+    font-style: italic;
+    font-size: smaller;
+    text-align: center;
+    background-color: darkblue;
+    color: lightgray;
+    padding: 20px;
+}
+
+hr {
+  width: 100%;
+}
+
+p {
+  margin-left: 10%;
+  margin-right: 10%;
+  text-align: center;
+}
