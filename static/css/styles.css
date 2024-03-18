@@ -98,3 +98,26 @@ body {
 .homepage-button:hover {
     transform: translateY(-2px); /* Slight raise effect on hover */
 }
+
+img#csumb_logo {
+  width: 25%;
+}
+
+footer {
+    font-style: italic;
+    font-size: smaller;
+    text-align: center;
+    background-color: darkblue;
+    color: lightgray;
+    padding: 20px;
+}
+
+hr {
+  width: 100%;
+}
+
+p {
+  margin-left: 10%;
+  margin-right: 10%;
+  text-align: center;
+}
