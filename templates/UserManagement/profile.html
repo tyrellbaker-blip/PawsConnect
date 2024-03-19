@@ -1,12 +1,39 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container mt-5">
-    <h1>{{ user.username }}'s Profile</h1>
-    {% if user.is_authenticated %}
-    <a href="{% url 'UserManagement:edit_profile' %}">Edit Profile</a>
-    <p>Email: {{ user.email }}</p>
-    <p>Join date: {{ user.date_joined }}</p>
+{% load static %}
 
-{% endif %}
-</div>
+{% block head %}
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'UserManagement/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="profile-container">
+        <div class="profile-card">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}'s profile picture" class="profile-pic"/>
+            {% else %}
+                <img src="{% static 'default_profile.png' %}" alt="Default profile picture" class="profile-pic"/>
+            {% endif %}
+            <h1>{{ user.username }}'s Profile</h1>
+            <p>Email: {{ user.email }}</p>
+            <p>Join date: {{ user.date_joined|date:"F d, Y" }}</p>
+            <a href="{% url 'UserManagement:edit_profile' %}" class="btn">Edit Profile</a>
+        </div>
+        <div class="sidebar">
+            <h3>Pets</h3>
+            <ul>
+                {% for pet in user.pets.all %}
+                    <li>{{ pet.name }}</li>
+                {% endfor %}
+            </ul>
+            <h3>Friends</h3>
+            <ul>
+                {% for friend in user.friends.all %}
+                    <li>{{ friend.username }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 {% endblock %}

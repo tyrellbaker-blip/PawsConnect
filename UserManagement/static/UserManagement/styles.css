@@ -212,3 +212,147 @@ footer {
         padding: 10px;
     }
 }
+
+
+
+/* this is for profiles may need to change in the future*/
+/* Reset and base styles */
+body, h1, h2, h3, p, ul, li, a {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    list-style: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    color: #333;
+    background-color: #f4f4f4;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Profile section */
+.profile-card {
+    max-width: 350px;
+    margin: 40px auto;
+    text-align: center;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.profile-pic {
+    border-radius: 50%;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 20px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Header */
+header {
+    background: #007bff;
+    color: #ffffff;
+    padding: 15px 0;
+    text-align: center;
+}
+
+/* Navigation */
+nav ul {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+nav ul li {
+    margin: 0 20px;
+}
+
+nav ul li a {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Footer */
+footer {
+    background: #333;
+    color: #ffffff;
+    text-align: center;
+    padding: 20px 0;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Utility classes */
+.btn {
+    background: #007bff;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background: #0056b3;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-card, .connections-container {
+        width: auto;
+        padding: 20px;
+    }
+
+    nav ul li {
+        margin: 0 10px;
+    }
+}
+
+/* Container for profile and sidebar */
+.profile-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+/* Profile Card */
+.profile-card {
+    flex: 1;
+    margin-right: 20px; /* Add space between the profile card and sidebar */
+    /* rest of the styles... */
+}
+
+/* Sidebar */
+.sidebar {
+    width: 300px; /* Set the width for the sidebar */
+    height: calc(100vh - 60px); /* Full height minus header/footer */
+    overflow-y: auto; /* Enable scrolling */
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+/* Sidebar Heading */
+.sidebar h3 {
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+/* Sidebar List */
+.sidebar ul {
+    list-style-type: none;
+}
+
+.sidebar li {
+    margin-bottom: 10px;
+}
+

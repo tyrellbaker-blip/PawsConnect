@@ -74,3 +74,13 @@ def edit_profile(request):
         form = EditProfileForm(instance=request.user)
 
     return render(request, 'edit_profile.html', {'form': form})
+
+
+
+
+def index(request):
+    return render(request, 'UserManagement/index.html', {'user': request.user})
+# UserManagement/views.py
+
+def connections(request):
+    return render(request, 'UserManagement/connections.html')

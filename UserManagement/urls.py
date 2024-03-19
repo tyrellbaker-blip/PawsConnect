@@ -3,7 +3,9 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from . import views
 
+
 app_name = 'UserManagement'
+
 
 urlpatterns = [
     path('home/', views.home, name='home'),
@@ -13,4 +15,16 @@ urlpatterns = [
     path('landing/', views.landing_page, name='landing_page'),
     path('profile/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
+
+    path('index/', views.index, name='index'),
+    path('connections/', views.connections, name='connections'),
+
 ]
+
+#added profile picture functionality
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
