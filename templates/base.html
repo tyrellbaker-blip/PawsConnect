@@ -9,12 +9,19 @@
     {% load static %}
     <!-- Main CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css'  %}">
-<link rel="stylesheet" type="text/css" href="{% static 'UserManagement/styles.css'  %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'UserManagement/styles.css'  %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+    
+
 </head>
+
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">  <!-- Dark theme navbar -->
-            <a class="navbar-brand" href="{% url 'UserManagement:home' %}">My Site</a>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-darkblue">  <!-- Dark theme navbar -->
+            <a class="navbar-brand" href="{% url 'UserManagement:home' %}">Paws Connect</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -35,8 +42,7 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-<hr/>
+    
     <footer>
     <img id="csumb_logo" src="{{ MEDIA_URL }}logo.png" alt="CSUMB Logo">
     <p>CST438. 2024 ⒸLuciano, Baker, Rodas, Grimaldo</p>
