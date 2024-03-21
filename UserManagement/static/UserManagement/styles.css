@@ -50,7 +50,8 @@ body {
     color: #000;  /* Black headers in comments */
 }
 .registration-form {
-    color: white;
+    color: black;
+    margin: 0;
 }
 
 .registration-form input,
@@ -58,6 +59,7 @@ body {
 .registration-form select {
     background-color: #fff; /* Light background for form fields */
     color: #333; /* Dark text for input */
+    text-align: left;
 }
 /* Homepage specific styles for a bright, happy, and airy theme */
 .homepage-welcome {
@@ -163,6 +165,17 @@ h2 {
     background-position: center;
     background-repeat: no-repeat;
     padding: 20px;
+}
+
+#registerContent {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 1);
+  width: 80%;
+  max-width: 800px;
+  margin: auto;
+  text-align: center;
 }
 
 

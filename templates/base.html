@@ -14,8 +14,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
-    
-
 </head>
 
 <body>
@@ -28,9 +26,14 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
-                    <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:login' %}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:login' %}">Login</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:register' %}">Register</a></li>
                 </ul>
+                
+                <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
             </div>
         </nav>
     </header>
