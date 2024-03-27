@@ -3,20 +3,47 @@
 {% block title %}Login{% endblock title %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="bg-dark p-4 rounded">
-        <h2 class="text-light">Login</h2>
-        <form method="post" action="{% url 'UserManagement:login' %}" class="text-light">
-            {% csrf_token %}
-            {{ form.as_p }}
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+    <style>
+    body {
+        background-image: url('/media/background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        margin: 0;
+        padding: 0;
+    }
+    </style>
+    
+    <div class="container mt-5">
+        <div class="p-4 rounded">
+            <div id="content">
+                <h2 class="text-black">Login</h2>
+                <form method="post" action="{% url 'UserManagement:login' %}" class="text-black">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <br>
+                <a href="{% url 'UserManagement:register' %}" class="btn btn-primary">Don't have an Account? Register</a>
+            </div>
+        </div>
     </div>
-</div>
+    
+    <script>
+    document.getElementById("loginForm").addEventListener("submit", function(event) {
+        var username = document.getElementById("id_username").value.trim();
+        var password = document.getElementById("id_password").value.trim();
+        
+        if (!username || !password) {
+            alert("Username and Password fields cannot be empty!");
+            event.preventDefault();
+        }
+    });
+    </script>
 {% endblock content %}
 

@@ -9,58 +9,46 @@
     {% load static %}
     <!-- Main CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css'  %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'UserManagement/styles.css'  %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
 </head>
+
 <body>
     <header>
-    
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">  <!-- Dark theme navbar -->
-        
-            <a class="navbar-brand" href="{% url 'UserManagement:home' %}">My Site</a>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-darkblue">  <!-- Dark theme navbar -->
+            <a class="navbar-brand" href="{% url 'UserManagement:home' %}">Paws Connect</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
-                    
-                    {% if user.is_authenticated %}
-                        <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:profile' %}">Profile</a></li>
-                        <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:logout' %}">Logout</a></li>
-                            <form class="form-inline my-2 my-lg-0">
-                                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                            </form>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                  Filter
-                                </button>
-                                <div class="dropdown-menu">
-                                  <a class="dropdown-item" href="#">User</a>
-                                  <a class="dropdown-item" href="#">Pets</a>
-                                  <a class="dropdown-item" href="#">Location</a>
-
-                                </div>
-                              </div>
-                        
-                    {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
-                        <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:login' %}">Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:register' %}">Register</a></li>
-                        </ul>
-                        
-                        
-                    {% endif %}
-                    
-                    
+                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:login' %}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:register' %}">Register</a></li>
+                </ul>
                 
+                <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
             </div>
         </nav>
     </header>
     <main class="container mt-4">
         {% block content %}{% endblock %}
     </main>
+
     <!-- Bootstrap JS, Popper.js, and jQuery -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    
+    <footer>
+    <img id="csumb_logo" src="{{ MEDIA_URL }}logo.png" alt="CSUMB Logo">
+    <p>CST438. 2024 ⒸLuciano, Baker, Rodas, Grimaldo</p>
+</footer>
 </body>
 </html>
