@@ -2,7 +2,7 @@
 
 {% block title %}Home{% endblock %}
 {#spacing refernce#}
-{#<div class="container mt-5">#} 
+{#<div class="container mt-5"> #}
 {#    <div class="row">#}
 {#        <div class="col-md-8">#}
 {#            <h1 class="homepage-welcome">Welcome to PawsConnect</h1>#}
@@ -25,9 +25,7 @@
 
 
 {% block content %}
-    {% if user.is_authenticated %}
-        
-    {% else %}
+
         <div class="container mt-5">
             <div class="row">
                 <div class="col-md-8">
@@ -49,6 +47,6 @@
              </div>
         </div>
         
-    {% endif %}
+
 
 {% endblock %}

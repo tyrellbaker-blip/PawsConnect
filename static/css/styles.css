@@ -98,3 +98,18 @@ body {
 .homepage-button:hover {
     transform: translateY(-2px); /* Slight raise effect on hover */
 }
+.pfp{
+      width: 200px; /* Adjust the width and height to create the desired size */
+  height: 200px;
+  background-color: #ccc; /* Placeholder background color */
+  border-radius: 50%; /* Makes the div a circle */
+  overflow: hidden; /* Ensures content within the div is hidden if it overflows */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.img{
+        max-width: 100%; /* Ensure the image fills the square container */
+    max-height: 100%;
+    display: block; /* Ensures the image does not create extra space */
+}

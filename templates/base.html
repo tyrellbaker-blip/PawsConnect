@@ -21,7 +21,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
+                    
                     {% if user.is_authenticated %}
                         <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:profile' %}">Profile</a></li>
                         <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:logout' %}">Logout</a></li>
@@ -29,7 +29,20 @@
                                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
                                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
                             </form>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  Filter
+                                </button>
+                                <div class="dropdown-menu">
+                                  <a class="dropdown-item" href="#">User</a>
+                                  <a class="dropdown-item" href="#">Pets</a>
+                                  <a class="dropdown-item" href="#">Location</a>
+
+                                </div>
+                              </div>
+                        
                     {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
                         <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:login' %}">Login</a></li>
                         <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:register' %}">Register</a></li>
                         </ul>

@@ -1,24 +1,48 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <div class="container mt-5">
     <div class="row">
     
     
         <div class="col-md-9">
-            <h1>{{ user.username }}'s Profile</h1>
-            {% if user.bio %}
+        <h1>{{ user.username }}'s Profile</h1>
+            <div class="container">
+                <div class="row align-items-start">
+                    <div class="col">
+                        <img src="{{ MEDIA_URL }}{{ user.profile_picture }}" class="pfp" alt="User Profile Picture"
+                            style="
+                     width: 200px; 
+                     height: 200px;
+                     background-color: #ccc; 
+                     border-radius: 50%; 
+                     overflow: hidden; 
+                     display: flex;
+                     justify-content: center;
+                     align-items: center;"
+                        >
+                    </div>
+                    <div class="col">
+{#                        if user and person are not friends#}
+                         <button type="button" class="btn btn-success">Add Friend</button>
+{#                        else red button#}
+{#                        <button type="button" class="btn btn-danger">Remove Friend</button>#}
+                    </div>
+                </div>
+            </div>
+        <br>
+        
+            {% if user.is_authenticated %}
+            <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                            {% if user.bio %}
             <p>Bio: {{ user.bio }}</p>
             {% endif %}
             {% if user.location %}
             <p>Location: {{ user.location }}</p>
             {% endif %}
-            
-            <hr> 
-        
-            {% if user.is_authenticated %}
-            <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
             <p>Email: {{ user.email }}</p>
             <p>Join date: {{ user.date_joined }}</p>
+                <hr> 
                 
             <div class="btn-group" role="group" aria-label="User actions">
 {#                <a href="{% url 'UserManagement:pets' %}" class="btn btn-primary">Pets</a>#}
