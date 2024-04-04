@@ -1,13 +1,11 @@
 import logging
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.gis.geos import Point
-from geopy import Nominatim
-from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
+from django.contrib.auth.forms import UserCreationForm
+from django.forms import inlineformset_factory
 
+from PetManagement.models import Pet
 from .models import CustomUser
 
 
@@ -31,38 +29,22 @@ logger = logging.getLogger(__name__)
 
 
 class UserRegistrationForm(UserCreationForm):
-    city = forms.CharField(max_length=100, required=False)
-    state = forms.CharField(max_length=100, required=False)
-    zip_code = forms.CharField(max_length=12, required=False)
-    preferred_language = forms.ChoiceField(choices=[
-        ('en', 'English'),
-        ('es', 'Spanish'),
-        ('fr', 'French'),
-        ('zh', 'Chinese (Mandarin)')
-    ], widget=forms.Select(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(max_length=30, required=True, help_text='Required.')
+    last_name = forms.CharField(max_length=30, required=True, help_text='Required.')
+    has_pets = forms.ChoiceField(choices=[(True, 'Yes'), (False, 'No')], widget=forms.RadioSelect,
+                                 label='Do you have pets?')
 
-    class Meta:
-        model = get_user_model()
-        fields = ['first_name', 'last_name', 'username', 'email', 'city', 'state', 'zip_code', 'preferred_language',
-                  'password1', 'password2']
+    class Meta(UserCreationForm.Meta):
+        model = CustomUser
+        fields = ['username', 'display_name', 'first_name', 'last_name', 'email', 'password1', 'password2', 'city',
+                  'state', 'zip_code',
+                  'preferred_language', 'profile_picture', 'has_pets', 'about_me']
 
     def save(self, commit=True):
-        user = super(UserRegistrationForm, self).save(commit=False)
-
-        # Attempt geocoding
-        try:
-            geolocator = Nominatim(user_agent="your_app_name")
-            location_query = f"{self.cleaned_data.get('city')}, {self.cleaned_data.get('state')}, {self.cleaned_data.get('zip_code')}"
-            location = geolocator.geocode(location_query, timeout=10)
-
-            if location:
-                user.location = Point(location.longitude, location.latitude)
-            else:
-                # Log if geocoding was unsuccessful (e.g., address not found)
-                logger.warning(f"Geocoding failed for: {location_query}")
-        except (GeocoderUnavailable, GeocoderTimedOut) as e:
-            # Log the error and proceed without setting the location
-            logger.error(f"Geocoding service error: {e}")
+        # Save the provided password in hashed format
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
 
         if commit:
             user.save()
@@ -73,7 +55,8 @@ class UserRegistrationForm(UserCreationForm):
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'display_name', 'profile_picture', 'location', 'preferred_language']
+        fields = ['first_name', 'last_name', 'email', 'display_name', 'profile_picture', 'location',
+                  'preferred_language']
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'display_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -85,3 +68,15 @@ class EditProfileForm(forms.ModelForm):
                 ('zh', 'Chinese (Mandarin)')
             ], attrs={'class': 'form-control'}),
         }
+
+
+class PetForm(forms.ModelForm):
+    class Meta:
+        model = Pet
+        fields = ['name', 'pet_type', 'age', 'profile_picture']
+
+
+PetFormSet = inlineformset_factory(
+    CustomUser, Pet, form=PetForm,
+    fields=['name', 'pet_type', 'age', 'profile_picture'], extra=1, can_delete=True
+)

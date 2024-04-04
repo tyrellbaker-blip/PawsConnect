@@ -19,7 +19,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = 'media/'
-AUTH_USER_MODEL = 'UserManagement.CustomUser'
+AUTH_USER_MODEL = "UserManagement.CustomUser"
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY')
 
 # Quick-start development settings - unsuitable for production
@@ -96,18 +96,6 @@ WSGI_APPLICATION = "PawsConnect.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'pawsconnect',
-        'USER': 'tyrellbaker',
-        'PASSWORD': 'fokhYq-vuqte6-dyscom',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

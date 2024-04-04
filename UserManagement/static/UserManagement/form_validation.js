@@ -47,4 +47,64 @@ document.addEventListener("DOMContentLoaded", function() {
             emailError.textContent = "";
         }
     });
-});
+    const hasPetsYes = document.getElementById('id_has_pets_0'); // Adjust the ID if necessary
+    const hasPetsNo = document.getElementById('id_has_pets_1'); // Adjust the ID if necessary
+    const petInfoSection = document.getElementById('pet-info-section'); // The section to show/hide
+
+    // Initially hide the pet information section
+    petInfoSection.style.display = hasPetsYes.checked ? 'block' : 'none';
+
+    // Function to show/hide pet info section based on user selection
+    function togglePetInfoDisplay() {
+        petInfoSection.style.display = hasPetsYes.checked ? 'block' : 'none';
+    }
+    // Listen for changes in the has_pets field
+    hasPetsYes.addEventListener('change', togglePetInfoDisplay);
+    hasPetsNo.addEventListener('change', togglePetInfoDisplay);
+
+    // Handle adding more pet forms
+    const addPetFormButton = document.getElementById('add-pet-form');
+if (addPetFormButton) {
+    addPetFormButton.addEventListener('click', function() {
+        const petFormsContainer = document.getElementById('pet-forms');
+        const totalPetForms = petFormsContainer.getElementsByClassName('pet-form').length;
+        const newFormIndex = totalPetForms; // The index for the new form
+
+        // Clone the first pet form to use as a template for the new form
+        const newPetForm = petFormsContainer.querySelector('.pet-form').cloneNode(true);
+
+        // Prepare to update new form fields
+        const newFieldInputs = newPetForm.querySelectorAll('input, select, textarea');
+        newFieldInputs.forEach(function(input) {
+            const nameAttr = input.getAttribute('name');
+            if (nameAttr) {
+                input.setAttribute('name', nameAttr.replace(/\d+/, String(newFormIndex)));
+            }
+
+            const idAttr = input.getAttribute('id');
+            if (idAttr) {
+                input.setAttribute('id', idAttr.replace(/\d+/, String(newFormIndex)));
+            }
+
+            // Reset the value of inputs to ensure the new form is empty
+            if (input.tagName === 'INPUT' && input.type !== 'checkbox' && input.type !== 'radio') {
+                input.value = '';
+            } else if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            }
+        });
+
+        // Append the new form to the container
+        petFormsContainer.appendChild(newPetForm);
+
+        // Update the management form to reflect the new total number of forms
+        // This should be done outside and after the loop
+        const totalFormsInput = document.getElementById('id_pets-TOTAL_FORMS');
+        totalFormsInput.setAttribute('value', String(newFormIndex + 1));
+    });
+}
+
+
+    });
+
+

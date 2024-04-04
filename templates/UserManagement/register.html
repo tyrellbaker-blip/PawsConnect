@@ -5,35 +5,46 @@
 
 {% block content %}
     <style>
-    body {
-        background-image: url('/media/registerbk.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        margin: 0;
-        padding: 0;
-    }
-    
-    .text-black {
-        color: black;
-    }
-    
-    .registration-form input[type="text"],
-    .registration-form input[type="email"],
-    .registration-form input[type="password"],
-    .registration-form textarea,
-    .registration-form select {
-        width: 100%;
-    }
-    
+        body {
+            background-image: url('/media/registerbk.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+        }
+
+        .text-black {
+            color: black;
+        }
+
+        .registration-form input[type="text"],
+        .registration-form input[type="email"],
+        .registration-form input[type="password"],
+        .registration-form textarea,
+        .registration-form select {
+            width: 100%;
+        }
+
     </style>
-    
+
     <div class="container mt-5">
         <div id="registerContent">
             <h2 class="text-black">Register</h2>
-            <form method="post" enctype="multipart/form-data" class= "registration-form p-3 rounded">
+            <form method="post" enctype="multipart/form-data" class="registration-form p-3 rounded">
                 {% csrf_token %}
-                {{ form.as_p }}
+                {{ user_form.as_p }}
+                <div id="pet-info-section" style="display: none;">
+                    {{ pet_formset.management_form }}
+                    <div id="pet-forms">
+                        {% for form in pet_formset %}
+                            <div class="pet-form">
+                                {{ form.as_p }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-pet-form">+</button>
+                </div>
                 <button type="submit" class="btn btn-primary">Register</button>
             </form>
             <p class="mt-3">
@@ -44,5 +55,5 @@
 {% endblock %}
 
 {% block extra_body %}
-<script src="{% static 'UserManagement/form_validation.js' %}"></script>
+    <script src="{% static 'UserManagement/form_validation.js' %}"></script>
 {% endblock extra_body %}
