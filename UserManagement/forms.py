@@ -40,6 +40,7 @@ class UserRegistrationForm(UserCreationForm):
                   'state', 'zip_code',
                   'preferred_language', 'profile_picture', 'has_pets', 'about_me']
 
+
     def save(self, commit=True):
         # Save the provided password in hashed format
         user = super().save(commit=False)
@@ -50,6 +51,13 @@ class UserRegistrationForm(UserCreationForm):
             user.save()
 
         return user
+
+    def __init__(self, *args, **kwargs):
+        super(UserRegistrationForm, self).__init__(*args, **kwargs)
+        # This should remove the help_text for password1.
+        self.fields['password1'].help_text = None
+        self.fields['password2'].help_text = None
+        self.fields['username'].help_text = None
 
 
 class EditProfileForm(forms.ModelForm):
