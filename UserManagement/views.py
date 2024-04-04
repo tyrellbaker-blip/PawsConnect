@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .forms import CustomLoginForm, UserRegistrationForm, \
-    EditProfileForm  # Make sure this import matches the location of your LoginForm
+    EditProfileForm, PetFormSet  # Make sure this import matches the location of your LoginForm
 
 
 def user_login(request):
@@ -35,14 +35,25 @@ def user_login(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = form.save()
+        user_form = UserRegistrationForm(request.POST, request.FILES)
+        pet_formset = PetFormSet(request.POST, request.FILES)
+
+        if user_form.is_valid() and pet_formset.is_valid():
+            user = user_form.save(commit=False)
+            user.save()  # Save the user to the database
+            pet_formset.instance = user  # Associate the pets with the user
+            pet_formset.save()  # Save the pet data to the database
+
             login(request, user)  # Log the user in
-            return redirect('UserManagement:profile')  # Redirect to the home page
+            return redirect('UserManagement:profile')  # Redirect to the user's profile page
     else:
-        form = UserRegistrationForm()
-    return render(request, 'UserManagement/register.html', {'form': form})
+        user_form = UserRegistrationForm()
+        pet_formset = PetFormSet()
+
+    return render(request, 'UserManagement/register.html', {
+        'user_form': user_form,
+        'pet_formset': pet_formset
+    })
 
 
 @login_required
