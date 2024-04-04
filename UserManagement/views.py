@@ -84,4 +84,14 @@ def edit_profile(request):
     else:
         form = EditProfileForm(instance=request.user)
 
-    return render(request, 'edit_profile.html', {'form': form})
+    return render(request, 'UserManagement/edit_profile.html', {'form': form})
+
+
+def photos(request):
+    return render(request, 'UserManagement/photos.html')
+
+def friends(request):
+    return render(request, 'UserManagement/friends.html')
+
+def pets(request):
+    return render(request, 'UserManagement/pets.html')

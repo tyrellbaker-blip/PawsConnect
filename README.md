@@ -111,3 +111,7 @@ python3 manage.py migrate
 
 Once your database is set up, you should be able to run the server as you 
 normally would. If you have any questions, reach out to me. 
+
+
+
+# If you need to install requirements, meaning if you need to pip install or npm install anything that isn't 
