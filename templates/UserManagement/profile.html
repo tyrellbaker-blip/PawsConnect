@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+    
+    
+{#    User Profile page stuff#}
 <div class="container mt-5">
     <div class="row">
-    
-    
+
+
         <div class="col-md-9">
         <h1>{{ user.username }}'s Profile</h1>
             <div class="container">
@@ -22,8 +25,9 @@
                      align-items: center;"
                         >
                     </div>
+{#                    if profile IS NOT user, display the friend button #}
                     <div class="col">
-{#                        if user and person are not friends#}
+{#                        if user and person are not friends #}
                          <button type="button" class="btn btn-success">Add Friend</button>
 {#                        else red button#}
 {#                        <button type="button" class="btn btn-danger">Remove Friend</button>#}
@@ -31,10 +35,10 @@
                 </div>
             </div>
         <br>
-        
+
             {% if user.is_authenticated %}
             <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
-                            {% if user.bio %}
+                {% if user.bio %}
             <p>Bio: {{ user.bio }}</p>
             {% endif %}
             {% if user.location %}
@@ -43,11 +47,11 @@
             <p>Email: {{ user.email }}</p>
             <p>Join date: {{ user.date_joined }}</p>
                 <hr> 
-                
+
             <div class="btn-group" role="group" aria-label="User actions">
-{#                <a href="{% url 'UserManagement:pets' %}" class="btn btn-primary">Pets</a>#}
-{#                <a href="{% url 'UserManagement:friends' %}" class="btn btn-primary">Friends</a>#}
-{#                <a href="{% url 'UserManagement:photos' %}" class="btn btn-primary">Photos</a>#}
+                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Pets</a>
+                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Friends</a>
+                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Photos</a>
             </div>
             {% endif %}
         </div>

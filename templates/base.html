@@ -25,15 +25,57 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:login' %}">Login</a></li>
+                         {% if user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:logout' %}">Logout</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:profile' %}">Profile</a></li>
+{#                             if no incoming req, disable OR keep it enabled and it displays "nothing here"#}
+                             <div class="dropdown">
+                               <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                 Friend Requests
+                               </button>
+                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+{#                                   populate incoming request, display: pic, username, accept button, deny button#}
+                               </div>
+                             </div>
+                             
+                             <div class="dropdown">
+                               <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                 Pet Requests
+                               </button>
+                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+{#                                   populate incoming request to adopt#}
+                               </div>
+                             </div>
+                             
+                             
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:home' %}">Home</a></li>
+                        <li class="nav-item"><a class="btn btn-secondary" href="{% url 'UserManagement:login' %}">Login</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'UserManagement:register' %}">Register</a></li>
-                </ul>
+
+
+                    {% endif %}
                 
-                <form class="form-inline my-2 my-lg-0">
-                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                </form>
+                </ul>
+            {% if user.is_authenticated %}
+                                         <form class="form-inline my-2 my-lg-0 ">
+                            <div class="form-group ">
+                                <label for="filter" ></label>
+                                <select class="form-control bg-warning " id="filter">
+                                    <option>--Filter--</option>
+                                    <option value="user" >User</option>
+                                    <option value="petName" >Pet Name</option>
+                                    <option value="petID" >Pet ID</option>
+                                    <option value="Location" >Location</option>
+                                    
+                                </select>
+                            </div>
+                            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                            </form>
+            {%  endif %}
+                
+
             </div>
         </nav>
     </header>
@@ -45,6 +87,7 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    
     
     <footer>
     <img id="csumb_logo" src="{{ MEDIA_URL }}logo.png" alt="CSUMB Logo">
