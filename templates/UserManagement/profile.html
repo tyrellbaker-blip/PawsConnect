@@ -2,39 +2,37 @@
 {% load static %}
 {% block content %}
     
-    
-{#    User Profile page stuff#}
-<div class="container mt-5">
-    <div class="row">
+<div class="container mt-5"> 
+    <div class="row"> 
 
-
-        <div class="col-md-9">
-        <h1>{{ user.username }}'s Profile</h1>
-            <div class="container">
-                <div class="row align-items-start">
-                    <div class="col">
-                        <img src="{{ MEDIA_URL }}{{ user.profile_picture }}" class="pfp" alt="User Profile Picture"
-                            style="
-                     width: 200px; 
-                     height: 200px;
-                     background-color: #ccc; 
-                     border-radius: 50%; 
-                     overflow: hidden; 
-                     display: flex;
-                     justify-content: center;
-                     align-items: center;"
-                        >
-                    </div>
-{#                    if profile IS NOT user, display the friend button #}
-                    <div class="col">
-{#                        if user and person are not friends #}
-                         <button type="button" class="btn btn-success">Add Friend</button>
-{#                        else red button#}
-{#                        <button type="button" class="btn btn-danger">Remove Friend</button>#}
-                    </div>
-                </div>
-            </div>
-        <br>
+ 
+        <div class="col-md-9"> 
+        <h1>{{ user.username }}'s Profile</h1> 
+            <div class="container"> 
+                <div class="row align-items-start"> 
+                    <div class="col"> 
+                        <img src="{{ MEDIA_URL }}{{ user.profile_picture }}" class="pfp" alt="User Profile Picture" 
+                            style=" 
+                     width: 200px;  
+                     height: 200px; 
+                     background-color: #ccc;  
+                     border-radius: 50%;  
+                     overflow: hidden;  
+                     display: flex; 
+                     justify-content: center; 
+                     align-items: center;" 
+                        > 
+                    </div> 
+{#                    if profile IS NOT user, display the friend buttons #}
+                    <div class="col ">
+{#                        if user and person are not friends  #}
+                         <button type="button " class="btn btn-success">Add Friend</button>
+{#                        else red button #}
+{#                        < button type="button" class="btn btn-danger">Remove Friend</button>#}
+                    </div> 
+                </div> 
+            </div> 
+        <br> 
 
             {% if user.is_authenticated %}
             <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
@@ -49,9 +47,10 @@
                 <hr> 
 
             <div class="btn-group" role="group" aria-label="User actions">
-                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Pets</a>
-                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Friends</a>
-                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Photos</a>
+{#            commented out to not break#}
+{#                <a href="{% url 'UserManagement:pets_page' %}" class="btn btn-primary">Pets</a>#}
+{#                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Friends</a>#}
+{#                <a href="{% url 'UserManagement:home' %}" class="btn btn-primary">Photos</a>#}
             </div>
             {% endif %}
         </div>
