@@ -66,9 +66,9 @@ ROOT_URLCONF = "PawsConnect.urls"
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'tyrellbaker',
+        'NAME': 'pawsconnect',
         'USER': 'tyrellbaker',
-        'PASSWORD': config('DATABASE_PASSWORD') ,
+        'PASSWORD': config('DATABASE_PASSWORD'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
