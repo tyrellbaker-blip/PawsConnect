@@ -40,7 +40,6 @@ class UserRegistrationForm(UserCreationForm):
                   'state', 'zip_code',
                   'preferred_language', 'profile_picture', 'has_pets', 'about_me']
 
-
     def save(self, commit=True):
         # Save the provided password in hashed format
         user = super().save(commit=False)
