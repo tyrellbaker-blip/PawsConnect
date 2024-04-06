@@ -1,32 +1,40 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-    
-    
-        <div class="col-md-9">
-            <h1>{{ user.username }}'s Profile</h1>
-            {% if user.about_me %}
-            <p>Bio: {{ user.about_me }}</p>
-            {% endif %}
-            {% if user.location %}
-            <p>Location: {{ user.location }}</p>
-            {% endif %}
-            
-            <hr> 
-        
-            {% if user.is_authenticated %}
-            <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
-            <p>Email: {{ user.email }}</p>
-            <p>Join date: {{ user.date_joined }}</p>
-                
-            <div class="btn-group" role="group" aria-label="User actions">
-                <a href="{% url 'UserManagement:pets' %}" class="btn btn-primary">Pets</a>
-                <a href="{% url 'UserManagement:friends' %}" class="btn btn-primary">Friends</a>
-                <a href="{% url 'UserManagement:photos' %}" class="btn btn-primary">Photos</a>
-            </div>
-            {% endif %}
-        </div>
+
+    <style>
+        .left-align-hr {
+            width: calc(500% + 200px);
+            margin: 0 -50px 50px -500px;
+            border: none;
+            border-top: 3px dotted darkblue;
+            border-radius: 5px;
+        }
+    </style>
+
+    <div class="text-left mb-3">
+        <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">
+            <i class="fas fa-cog"></i> Edit Profile
+        </a> <h1 style="text-align: center">{{ user.username }}'s Profile</h1>
     </div>
-</div>
+
+    {% if user.about_me %}
+        <p>Bio: {{ user.about_me }}</p>
+    {% endif %}
+
+    {% if user.location %}
+        <p>Location: {{ user.location }}</p>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+        <p>Email: {{ user.email }}</p>
+        <p>Join date: {{ user.date_joined }}</p>
+
+        <div class="btn-group d-flex justify-content-center" role="group" aria-label="User actions">
+            <a href="{% url 'UserManagement:pets' %}" class="btn btn-primary">Pets</a>
+            <a href="{% url 'UserManagement:friends' %}" class="btn btn-primary">Friends</a>
+            <a href="{% url 'UserManagement:photos' %}" class="btn btn-primary">Photos</a>
+        </div>
+    {% endif %}
+
+    <br><hr class="left-align-hr">
 {% endblock %}
