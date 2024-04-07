@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     "Content",
     "PetManagement",
-    "SocialInteraction",
     "UserManagement",
     "bootstrap4",
 ]
@@ -66,7 +65,7 @@ ROOT_URLCONF = "PawsConnect.urls"
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'pawsconnect',
+        'NAME': 'postgres',
         'USER': 'tyrellbaker',
         'PASSWORD': config('DATABASE_PASSWORD'),
         'HOST': 'localhost',

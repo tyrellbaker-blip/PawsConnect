@@ -11,10 +11,22 @@ from geopy.geocoders import GoogleV3
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
-# Replace 'my_project.settings' with your actual settings module
 from PawsConnect.settings import GOOGLE_MAPS_API_KEY
 
 logger = logging.getLogger(__name__)
+
+
+class Photo(models.Model):
+    user = models.ForeignKey('CustomUser', related_name='user_photos', on_delete=models.CASCADE, null=True, blank=True)
+    pet = models.ForeignKey('PetManagement.Pet', related_name='pet_photos', on_delete=models.CASCADE, null=True, blank=True)
+    image = models.ImageField(upload_to='photos/')
+    caption = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.user and self.pet:
+            raise ValueError("A photo cannot be related to both a user and a pet.")
+        super().save(*args, **kwargs)
 
 
 class CustomUser(AbstractUser):
@@ -41,8 +53,8 @@ class CustomUser(AbstractUser):
     about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
     has_pets = models.BooleanField(default=False)
     friends = models.ManyToManyField('self', through='Friendship', symmetrical=False, related_name='friends_rel')
+    photos = models.ManyToManyField('Photo', related_name='tagged_users', blank=True)
 
-    # --- Properties for Derived Information ---
     @property
     def pets(self):
         from PetManagement.models import Pet
@@ -62,22 +74,16 @@ class CustomUser(AbstractUser):
 
     @property
     def searchable_text(self):
-        """
-        Combines relevant fields into a single string for easier full-text search.
-        """
         return f"{self.username} {self.display_name} {self.first_name} {self.last_name} {self.city} {self.state} {self.zip_code}"
 
     @property
     def num_friends(self):
         return self.friends.count()
 
-# --- Utility Methods ---
     def save(self, *args, **kwargs):
-        # Default display name if blank
         if not self.display_name:
             self.display_name = f"{self.first_name} {self.last_name}".strip()
 
-        # Geocoding logic
         if not self.location and self.city and self.state and self.zip_code:
             try:
                 geolocator = GoogleV3(api_key=GOOGLE_MAPS_API_KEY)
@@ -94,30 +100,24 @@ class CustomUser(AbstractUser):
         super().save(*args, **kwargs)
 
     def get_full_location(self):
-        """Returns a string of the full location based on city, state, and zip."""
         return f"{self.city}, {self.state} {self.zip_code}".strip()
 
     def get_profile_picture_url(self):
-        """Returns the URL of the profile picture or a placeholder if none."""
         if self.profile_picture:
             return self.profile_picture.url
         return 'url/to/default/profile/picture'
 
     @property
     def is_profile_private(self):
-        """Checks if the user's profile is set to private."""
         return self.profile_visibility == 'noone'
 
     def add_friend(self, user):
-        Friendship.objects.create(from_user=self, to_user=user)
+        Friendship.objects.create(user_from=self, user_to=user)
 
     def remove_friend(self, user):
-        Friendship.objects.filter(from_user=self, to_user=user).delete()
+        Friendship.objects.filter(user_from=self, user_to=user).delete()
 
     def distance_to(self, other_user):
-        """
-        Calculates the distance (in miles) between two users based on their location coordinates.
-        """
         if self.location and other_user.location:
             distance = self.location.distance(other_user.location) * D(mi=1)
             return distance.mi
@@ -129,11 +129,11 @@ class CustomUser(AbstractUser):
         ]
 
 
-# Assuming the Friendship model is part of UserManagement and reflects user connections
 class Friendship(models.Model):
-    user_from = models.ForeignKey(CustomUser, related_name='friendship_creator_set', on_delete=models.CASCADE)
-    user_to = models.ForeignKey(CustomUser, related_name='friend_set', on_delete=models.CASCADE)
+    user_from = models.ForeignKey(CustomUser, related_name='sent_friendships', on_delete=models.CASCADE)
+    user_to = models.ForeignKey(CustomUser, related_name='received_friendships', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
 
     class Meta:
         constraints = [
