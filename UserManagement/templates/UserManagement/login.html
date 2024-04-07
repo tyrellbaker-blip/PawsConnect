@@ -28,6 +28,7 @@
                     {% endif %}
                     <button type="submit" class="btn btn-primary">Login</button>
                 </form>
+                <a href="{% provider_login_url 'google' %}" class="btn btn-danger">Login with Google</a>
                 <br>
                 <a href="{% url 'UserManagement:register' %}" class="btn btn-primary">Don't have an Account? Register</a>
             </div>
