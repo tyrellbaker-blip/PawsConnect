@@ -24,5 +24,7 @@ urlpatterns = [
                   path('admin/', admin.site.urls),
                   path('user/', include('UserManagement.urls', namespace='UserManagement')),
 
-                  path('', lambda request: redirect('UserManagement:login')),  # Redirect the root URL
+                  path('', lambda request: redirect('UserManagement:login')),
+                  path('accounts/', include('allauth.urls')),
+                  # Redirect the root URL
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

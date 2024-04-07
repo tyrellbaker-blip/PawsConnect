@@ -108,81 +108,46 @@ def edit_profile(request):
 
 def search(request):
     form = SearchForm(request.GET or None)
-    context = {'form': form}
+    context = {
+        'form': form,
+        'search_type': None,  # Default to None, will be updated if a search is performed
+        'results': None,  # Default to None, will hold either user or pet results
+    }
 
     if form.is_valid():
         search_type = form.cleaned_data['type']
-        query = form.cleaned_data.get('query')
-        city = form.cleaned_data.get('city')
-        state = form.cleaned_data.get('state')
-        zip_code = form.cleaned_data.get('zip_code')
-        range = form.cleaned_data.get('range')
-        pet_id = form.cleaned_data.get('pet_id')
-        pet_name = form.cleaned_data.get('pet_name')
+        context['search_type'] = search_type  # Update context with the type of search
 
         if search_type == 'user':
             users = CustomUser.objects.all()
 
-            if query:
-                users = users.filter(Q(username__icontains=query) | Q(display_name__icontains=query))
+            if form.cleaned_data.get('query'):
+                users = users.filter(Q(username__icontains=form.cleaned_data['query']) | Q(display_name__icontains=form.cleaned_data['query']))
 
-            if city and state and zip_code and range:
+            if 'location_point' in form.cleaned_data and form.cleaned_data.get('range'):
                 user_location = form.cleaned_data.get('location_point')
-                search_distance = D(mi=int(range))
-
-                # Debug prints for search parameters
-                print("Search Type:", search_type)
-                print("Query:", query)
-                print("City:", city)
-                print("State:", state)
-                print("Zip Code:", zip_code)
-                print("Range:", range)
-                print("Search Point (lat, lng):", user_location.y, user_location.x)
-                print("Search Distance (mi):", search_distance)
-
+                search_distance = D(mi=int(form.cleaned_data['range']))
                 users = users.filter(location__distance_lte=(user_location, search_distance))
 
-                # After filtering, print out the remaining users with their locations
-                for user in users:
-                    print(f"User: {user.username}, Location (lat, lng): {user.location.y}, {user.location.x}")
-
-            context['users'] = users
-
+            context['results'] = users  # Update context with the user results
 
         elif search_type == 'pet':
+            pets_query = Pet.objects.all()
 
-            pets_query = Pet.objects.all()  # Start with all pets, but this query is not executed yet.
+            if form.cleaned_data.get('pet_id'):
+                pets_query = pets_query.filter(id__icontains=form.cleaned_data['pet_id'])
 
+            if form.cleaned_data.get('pet_name'):
+                pets_query = pets_query.filter(name__icontains=form.cleaned_data['pet_name'])
 
-
-            if pet_id:
-                pets_query = pets_query.filter(id__icontains=pet_id)
-
-            if pet_name:
-                pets_query = pets_query.filter(name__icontains=pet_name)
-
-            if 'location_point' in form.cleaned_data and range:
+            if 'location_point' in form.cleaned_data and form.cleaned_data.get('range'):
                 location_point = form.cleaned_data['location_point']
-                search_distance = D(mi=int(range))
-
+                search_distance = D(mi=int(form.cleaned_data['range']))
                 pets_query = pets_query.filter(owner__location__distance_lte=(location_point, search_distance))
 
-            context['pets'] = pets_query
+            context['results'] = pets_query  # Update context with the pet results
 
-    return render(request, 'UserManagement/search_results.html', context)
-
-
-def photos(request):
-    return render(request, 'UserManagement/photos.html')
-
-
-def friends(request):
-    return render(request, 'UserManagement/friends.html')
-
-
-def pets(request):
-    return render(request, 'UserManagement/pets.html')
-
+    return render(request, 'UserManagement/search.html', context)
 
 @login_required
 def photos(request):
@@ -190,11 +155,21 @@ def photos(request):
     return render(request, 'UserManagement/photos.html', {'user_photos': user_photos})
 
 
-
 @login_required
 def friends(request):
     user_friends = request.user.friends.all()  # Assuming a 'friends' many-to-many field on your user model
     return render(request, 'UserManagement/friends.html', {'user_friends': user_friends})
+
+
+def pets(request):
+    return render(request, 'UserManagement/pets.html')
+
+
+
+
+
+
+
 
 
 @login_required

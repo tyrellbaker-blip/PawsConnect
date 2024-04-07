@@ -1,0 +1,73 @@
+{% extends "UserManagement/base.html" %}
+
+{% block title %}Search{% endblock title %}
+
+{% block content %}
+<h2>Search</h2>
+
+<form method="get" action="{% url 'UserManagement:search' %}">
+    {% csrf_token %}
+    <div class="form-group">
+        {{ form.type.label_tag }}
+        {{ form.type }}
+    </div>
+    <div class="form-group">
+        {{ form.query.label_tag }}
+        {{ form.query }}
+    </div>
+    <div class="form-group d-none" id="location-fields">
+        {{ form.city.label_tag }}
+        {{ form.city }}
+        {{ form.state.label_tag }}
+        {{ form.state }}
+        {{ form.zip_code.label_tag }}
+        {{ form.zip_code }}
+        {{ form.range.label_tag }}
+        {{ form.range }}
+    </div>
+    <div class="form-group d-none" id="pet-fields">
+        {{ form.pet_id.label_tag }}
+        {{ form.pet_id }}
+        {{ form.pet_name.label_tag }}
+        {{ form.pet_name }}
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+
+<div id="search-results">
+    {% if results %}
+        {% if search_type == "user" %}
+            <h3>User Results</h3>
+            <ul class="list-group">
+                {% for user in results %}
+                    <li class="list-group-item">
+                        Username: {{ user.username }} <br>
+                        Email: {{ user.email }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% elif search_type == "pet" %}
+            <h3>Pet Results</h3>
+            <ul class="list-group">
+                {% for pet in results %}
+                    <li class="list-group-item">
+                        Pet Name: {{ pet.name }} <br>
+                        Pet ID: {{ pet.id }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_body %}
+<script>
+// Placeholder for JavaScript to show/hide form fields based on the selected search type
+// You'll implement the JavaScript logic here to manage the visibility of #location-fields and #pet-fields
+</script>
+{% endblock %}
