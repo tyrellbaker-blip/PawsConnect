@@ -1,0 +1,60 @@
+{% extends 'UserManagement/base.html' %}
+{% block content %}
+
+<style>
+    .left-align-hr {
+        width: calc(500% + 200px);
+        margin: 0 -50px 50px -500px;
+        border: none;
+        border-top: 3px dotted darkblue;
+        border-radius: 5px;
+    }
+</style>
+
+<h1 style="text-align: center;">{{ user.username }}'s Pets</h1>
+<br><hr class="left-align-hr">
+
+<div class="container mt-5">
+    <div class="row">
+        {% if user.pets.all %}
+            {% for pet in user.pets.all %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        {% if pet.profile_picture %}
+                            <img src="{{ pet.profile_picture.url }}" class="card-img-top" alt="{{ pet.name }}">
+                        {% else %}
+                            <!-- Placeholder image if no profile picture is set -->
+                        {% endif %}
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ pet.name }}</h5>
+                            <p class="card-text">Age: {{ pet.age }}</p>
+                            <p class="card-text">Owner: {{ user.username }}</p>
+                            <a href="{% url 'PetManagement:pet_profile' pet.id %}" class="btn btn-primary">View Profile</a>
+                            <a href="{% url 'PetManagement:delete_pet' pet.id %}" class="btn btn-danger">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 text-center">
+                        <p>No pets found.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-md-4 text-center">
+            <a href="{% url 'PetManagement:add_pet' %}" class="btn btn-success">Add Pet</a>
+            <a href="/user/profile/" class="btn btn-primary">Back to Profile</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

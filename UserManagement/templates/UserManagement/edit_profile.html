@@ -1,0 +1,32 @@
+{% extends 'UserManagement/base.html' %}
+
+{% block content %}
+<style>
+.left-align-hr {
+    width: calc(500% + 200px);
+    margin: 0 -50px 50px -500px;
+    border: none;
+    border-top: 3px dotted darkblue;
+    border-radius: 5px;
+}
+</style>
+
+<h1 style="text-align: center">Edit Profile</h1>
+<hr class="left-align-hr">
+
+<div class="container mt-5">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'UserManagement:profile' %}" class="btn btn-primary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+<br>
+{% endblock %}

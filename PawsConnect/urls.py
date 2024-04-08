@@ -17,17 +17,14 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import path, include
-from django.contrib.auth.views import LogoutView
-
-from UserManagement.views import user_login, home, register, landing_page
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
                   path('user/', include('UserManagement.urls', namespace='UserManagement')),
-                  # Redirect the root URL to the 'home' view within the UserManagement namespace
-                  path('', lambda request: redirect('UserManagement:login')),  # Redirect the root URL
-                  path('social/', include('SocialInteraction.urls')),
+
+                  path('', lambda request: redirect('UserManagement:login')),
+                  path('accounts/', include('allauth.urls')),
+                  # Redirect the root URL
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
