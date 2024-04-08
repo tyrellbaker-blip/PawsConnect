@@ -7,11 +7,14 @@ environment.
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - ### Requirements File
 - Install the requirements.txt file by running the following command:
+
 ```bash
 pip install -r requirements.txt
 ```
+
 - ## Python, pip, postgresql, and postgis
 
 - Python 3.8 or higher
@@ -61,7 +64,6 @@ Django projects on macOS and Windows.
    installation preferences, including the
    PostgreSQL superuser password and port number (default is 5432).
 
-
 ### Post-installation Steps
 
 1. **Launch pgAdmin**: If installed, use pgAdmin from the Start Menu for graphical
@@ -81,12 +83,15 @@ Use the PostgreSQL command-line interface (CLI) accessible from the terminal by
 double-clicking the server in pgAdmin.
 
 Once you've accessed the CLI, create a new database using the following command:
+
 ```bash
 createdb pawsconnect
 ```
-Once the database has been created, you're ready to work with it in django. To 
-make this functional, you need to go into your `settings.py` file and change 
+
+Once the database has been created, you're ready to work with it in django. To
+make this functional, you need to go into your `settings.py` file and change
 the DATABASES variable to the following:
+
 ```python
 DATABASES = {
     'default': {
@@ -99,19 +104,19 @@ DATABASES = {
     }
 }
 ```
-![postgis.png](misc%2Fpostgis.png)
-In the photo, I've labeled a couple things you'll want to be mindful of.
 
-Then, once you've done that, you can run the following command to make sure 
+
+![PG.png](misc%2FPG.png)In the photo, I've labeled a couple things you'll want to be mindful of.
+
+Then, once you've done that, you can run the following command to make sure
 that your database has the things from the sqlite database:
+
 ```bash
 python3 manage.py makemigrations
 python3 manage.py migrate
 ```
 
-Once your database is set up, you should be able to run the server as you 
-normally would. If you have any questions, reach out to me. 
+Once your database is set up, you should be able to run the server as you
+normally would. If you have any questions, reach out to me.
 
-
-
-# If you need to install requirements, meaning if you need to pip install or npm install anything that isn't 
+# IMPORTANT NOTE: DO NOT add dependencies to the application without notifying and commiserating with both front and backend to ensure that your dependency aligns with project goals. 
