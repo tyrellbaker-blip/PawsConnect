@@ -2,6 +2,7 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 from . import views
+from .views import CustomLogoutView
 
 app_name = 'UserManagement'
 
@@ -9,7 +10,7 @@ urlpatterns = [
     path('home/', views.home, name='home'),
 
     path('login/', views.user_login, name='login'),
-    path('logout/', LogoutView.as_view(next_page='UserManagement:login'), name='logout'),
+    path('logout/', CustomLogoutView.as_view(next_page='UserManagement:login'), name='logout'),
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),

@@ -1,14 +1,9 @@
 import logging
 from django import forms
-from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
-from geopy.geocoders import GoogleV3
-
 
 from PetManagement.models import Pet
 from .models import CustomUser
@@ -23,10 +18,13 @@ class CustomLoginForm(forms.Form):
         username = cleaned_data.get('username')
         password = cleaned_data.get('password')
 
-        if not authenticate(username=username, password=password):
-            raise forms.ValidationError(
-                "Invalid login details. Please, try again."
-            )
+        try:
+            user = authenticate(username=username, password=password)
+            if not user:
+                raise forms.ValidationError("Invalid username or password.")
+        except CustomUser.DoesNotExist:
+            raise forms.ValidationError("User with that username does not exist.")
+
         return cleaned_data
 
 
@@ -52,7 +50,7 @@ class UserRegistrationForm(UserCreationForm):
         user.last_name = self.cleaned_data["last_name"]
 
         if commit:
-            user.save()
+            user.save()  # This will trigger the geocoding logic in the model
 
         return user
 
@@ -63,6 +61,45 @@ class UserRegistrationForm(UserCreationForm):
         self.fields['password2'].help_text = None
         self.fields['username'].help_text = None
 
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+
+        try:
+            CustomUser.objects.get(username=username)
+            raise forms.ValidationError("A user with that username already exists.")
+        except CustomUser.DoesNotExist:
+            return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+
+        try:
+            CustomUser.objects.get(email=email)
+            raise forms.ValidationError("A user with that email address already exists.")
+        except CustomUser.DoesNotExist:
+            return email
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            raise ValidationError("Passwords don't match.")
+
+        # Add your password complexity and length checks here
+        if password1:
+            if len(password1) < 8:
+                raise ValidationError("Password must be at least 8 characters long.")
+            if not any(char.isdigit() for char in password1):
+                raise ValidationError("Password must contain at least one digit.")
+            if not any(char.isupper() for char in password1):
+                raise ValidationError("Password must contain at least one uppercase letter.")
+            if not any(char.islower() for char in password1):
+                raise ValidationError("Password must contain at least one lowercase letter.")
+            if not any(char in "!@#$%^&*()" for char in password1):
+                raise ValidationError("Password must contain at least one special character: !@#$%^&*().")
+
+        return password2
 
 class EditProfileForm(forms.ModelForm):
     class Meta:
@@ -135,26 +172,7 @@ class SearchForm(forms.Form):
 
         # Additional location validation for 'user' type search
         if search_type == 'user' and any([cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]) and not all([cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]):
-            raise ValidationError("Please provide a complete address: city, state, and zip code for location-based searches.")
-
-        # Handle geolocation for 'user' type search if location fields are filled
-        if search_type == 'user' and all([cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]):
-            self._geocode_location(cleaned_data)
+            raise ValidationError("Please provide a complete address: city, state, and zip code for location-based "
+                                  "searches.")
 
         return cleaned_data
-
-    def _geocode_location(self, cleaned_data):
-        city = cleaned_data.get('city')
-        state = cleaned_data.get('state')
-        zip_code = cleaned_data.get('zip_code')
-
-        geolocator = GoogleV3(api_key=settings.GOOGLE_MAPS_API_KEY)
-        try:
-            location_query = f"{city}, {state}, {zip_code}"
-            location = geolocator.geocode(location_query, timeout=10)
-            if location:
-                cleaned_data['location_point'] = Point(location.longitude, location.latitude, srid=4326)
-            else:
-                self.add_error('city', "Geocoding failed for the provided address.")
-        except (GeocoderTimedOut, GeocoderUnavailable) as e:
-            self.add_error('city', f"Geocoding service error: {e}")

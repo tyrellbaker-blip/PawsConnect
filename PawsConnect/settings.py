@@ -65,8 +65,6 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 
-LOGIN_REDIRECT_URL = 'UserManagement:profile'
-LOGOUT_REDIRECT_URL = 'UserManagement:login'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -149,6 +147,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR / 'static')
 ]
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -160,6 +159,11 @@ SOCIALACCOUNT_PROVIDERS = {
             'client_id': config('OAUTH_CLIENT_ID'),
             'secret': config('OAUTH_CLIENT_SECRET'),
             'key': ''
-        }
+
+        },
+        'GOOGLE_AUTH_REDIRECT_URI': config('GOOGLE_AUTH_REDIRECT_URI')
     }
 }
+LOGIN_REDIRECT_URL = 'UserManagement:profile'
+LOGOUT_REDIRECT_URL = 'UserManagement:login'
+

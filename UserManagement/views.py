@@ -1,3 +1,4 @@
+from allauth.account.views import LogoutView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -6,6 +7,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.urls import reverse_lazy
 
 from PetManagement.models import Pet
 from .forms import CustomLoginForm, UserRegistrationForm, \
@@ -122,7 +124,8 @@ def search(request):
             users = CustomUser.objects.all()
 
             if form.cleaned_data.get('query'):
-                users = users.filter(Q(username__icontains=form.cleaned_data['query']) | Q(display_name__icontains=form.cleaned_data['query']))
+                users = users.filter(Q(username__icontains=form.cleaned_data['query']) | Q(
+                    display_name__icontains=form.cleaned_data['query']))
 
             if 'location_point' in form.cleaned_data and form.cleaned_data.get('range'):
                 user_location = form.cleaned_data.get('location_point')
@@ -149,6 +152,7 @@ def search(request):
 
     return render(request, 'UserManagement/search.html', context)
 
+
 @login_required
 def photos(request):
     user_photos = Photo.objects.filter(user=request.user)  # Filter photos by the logged-in user
@@ -161,18 +165,17 @@ def friends(request):
     return render(request, 'UserManagement/friends.html', {'user_friends': user_friends})
 
 
-def pets(request):
-    return render(request, 'UserManagement/pets.html')
-
-
-
-
-
-
-
-
-
 @login_required
 def pets(request):
     user_pets = Pet.objects.filter(owner=request.user)  # Assuming a 'owner' ForeignKey to CustomUser on your Pet model
     return render(request, 'UserManagement/pets.html', {'user_pets': user_pets})
+
+
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('UserManagement:login')
+
+    def dispatch(self, request, *args, **kwargs):
+        print("CustomLogoutView: Logging out user:", request.user)
+        response = super().dispatch(request, *args, **kwargs)
+        print("CustomLogoutView: User logged out.")
+        return response

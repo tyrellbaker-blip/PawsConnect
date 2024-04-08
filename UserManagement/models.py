@@ -83,20 +83,6 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         if not self.display_name:
             self.display_name = f"{self.first_name} {self.last_name}".strip()
-
-        if not self.location and self.city and self.state and self.zip_code:
-            try:
-                geolocator = GoogleV3(api_key=GOOGLE_MAPS_API_KEY)
-                location_query = f"{self.city}, {self.state}, {self.zip_code}"
-                location = geolocator.geocode(location_query, timeout=10)
-
-                if location:
-                    self.location = Point(location.longitude, location.latitude)
-                else:
-                    logger.warning(f"Geocoding failed for: {location_query}")
-            except (GeocoderUnavailable, GeocoderTimedOut) as e:
-                logger.error(f"Geocoding service error: {e}")
-
         super().save(*args, **kwargs)
 
     def get_full_location(self):
@@ -123,6 +109,9 @@ class CustomUser(AbstractUser):
             return distance.mi
         return None
 
+
+
+
     class Meta:
         indexes = [
             models.Index(fields=['location'], name='location_idx'),
@@ -139,6 +128,8 @@ class Friendship(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user_from', 'user_to'], name='unique_friendship')
         ]
+
+
 
     def __str__(self):
         return f"{self.user_from} -> {self.user_to}"
