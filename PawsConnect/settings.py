@@ -43,21 +43,24 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'debug_toolbar',
     'django.contrib.gis',
+    "UserManagement",
     "Content",
     "PetManagement",
-    "UserManagement",
     "bootstrap4",
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+
 ]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+SOCIALACCOUNT_ADAPTER = 'UserManagement.adapter.MyAccountAdapter'
 SITE_ID = 1
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -67,15 +70,16 @@ ACCOUNT_USERNAME_REQUIRED = False
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Ensure session is available
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # Ensure user is authenticated
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware"
+    'UserManagement.middleware.ProfileCompletionMiddleware',  # Moved after session and authentication
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-
 ROOT_URLCONF = "PawsConnect.urls"
 
 DATABASES = {
@@ -166,4 +170,18 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 LOGIN_REDIRECT_URL = 'UserManagement:profile'
 LOGOUT_REDIRECT_URL = 'UserManagement:login'
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'UserManagement.middleware': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}

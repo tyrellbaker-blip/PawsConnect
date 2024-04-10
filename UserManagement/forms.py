@@ -1,4 +1,5 @@
 import logging
+
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
@@ -101,6 +102,7 @@ class UserRegistrationForm(UserCreationForm):
 
         return password2
 
+
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
@@ -117,6 +119,13 @@ class EditProfileForm(forms.ModelForm):
                 ('zh', 'Chinese (Mandarin)')
             ], attrs={'class': 'form-control'}),
         }
+
+
+class UserCompletionForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['display_name', 'city', 'state', 'zip_code',
+                  'preferred_language', 'profile_picture', 'has_pets', 'about_me']
 
 
 class PetForm(forms.ModelForm):
@@ -150,7 +159,8 @@ class SearchForm(forms.Form):
     state = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'placeholder': 'State'}))
     zip_code = forms.CharField(max_length=12, required=False, widget=forms.TextInput(attrs={'placeholder': 'Zip Code'}))
     # Distance choice for 'location' type search under 'user'
-    range = forms.ChoiceField(choices=DISTANCE_CHOICES, required=False, label='Range', help_text='Select search radius for location-based search.')
+    range = forms.ChoiceField(choices=DISTANCE_CHOICES, required=False, label='Range',
+                              help_text='Select search radius for location-based search.')
     # Fields for 'pet' type search
     pet_id = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Pet ID'}))
     pet_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Pet Name'}))
@@ -171,7 +181,9 @@ class SearchForm(forms.Form):
                 raise ValidationError('Please specify a pet ID or pet name for pet search.')
 
         # Additional location validation for 'user' type search
-        if search_type == 'user' and any([cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]) and not all([cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]):
+        if search_type == 'user' and any(
+                [cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]) and not all(
+                [cleaned_data.get('city'), cleaned_data.get('state'), cleaned_data.get('zip_code')]):
             raise ValidationError("Please provide a complete address: city, state, and zip code for location-based "
                                   "searches.")
 

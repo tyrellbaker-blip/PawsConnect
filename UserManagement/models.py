@@ -2,23 +2,19 @@ import logging
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
-from geopy.geocoders import GoogleV3
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
-
-from PawsConnect.settings import GOOGLE_MAPS_API_KEY
 
 logger = logging.getLogger(__name__)
 
 
 class Photo(models.Model):
     user = models.ForeignKey('CustomUser', related_name='user_photos', on_delete=models.CASCADE, null=True, blank=True)
-    pet = models.ForeignKey('PetManagement.Pet', related_name='pet_photos', on_delete=models.CASCADE, null=True, blank=True)
+    pet = models.ForeignKey('PetManagement.Pet', related_name='pet_photos', on_delete=models.CASCADE, null=True,
+                            blank=True)
     image = models.ImageField(upload_to='photos/')
     caption = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -54,6 +50,7 @@ class CustomUser(AbstractUser):
     has_pets = models.BooleanField(default=False)
     friends = models.ManyToManyField('self', through='Friendship', symmetrical=False, related_name='friends_rel')
     photos = models.ManyToManyField('Photo', related_name='tagged_users', blank=True)
+    profile_incomplete = models.BooleanField(default=True)
 
     @property
     def pets(self):
@@ -109,8 +106,16 @@ class CustomUser(AbstractUser):
             return distance.mi
         return None
 
+    def set_profile_incomplete(user):
+        required_fields = ['first_name', 'last_name', 'city', 'state', 'zip_code', 'profile_picture', 'has_pets']
+        for field in required_fields:
+            if not getattr(user, field):
+                user.profile_incomplete = True
+                user.save()
+                return  # Exit the loop if any required field is missing
 
-
+        user.profile_incomplete = False
+        user.save()
 
     class Meta:
         indexes = [
@@ -122,14 +127,16 @@ class Friendship(models.Model):
     user_from = models.ForeignKey(CustomUser, related_name='sent_friendships', on_delete=models.CASCADE)
     user_to = models.ForeignKey(CustomUser, related_name='received_friendships', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
+    status = models.CharField(max_length=20,
+                              choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')],
+                              default='pending')
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user_from', 'user_to'], name='unique_friendship')
         ]
 
-
-
     def __str__(self):
         return f"{self.user_from} -> {self.user_to}"
+
+

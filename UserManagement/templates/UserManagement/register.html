@@ -1,5 +1,6 @@
 {% extends 'UserManagement/base.html' %}
 {% load static %}
+{% load socialaccount %}
 
 {% block title %}Register{% endblock %}
 
@@ -93,7 +94,7 @@
         </div>
     </div>
     <br><br>
-{% endblock %}
+{% endblock content %}
 
 {% block extra_body %}
     <script src="{% static 'UserManagement/form_validation.js' %}"></script>
