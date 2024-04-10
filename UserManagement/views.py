@@ -9,7 +9,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.forms import modelformset_factory
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from PetManagement.forms import PetForm
@@ -103,8 +103,8 @@ class CustomLogoutView(LogoutView):
 
 @login_required
 @profile_completion_required
-def profile(request):
-    user = request.user
+def profile(request, slug):
+    user = get_object_or_404(CustomUser, slug=slug)
     context = {
         'user': user,
         'username': user.username,
@@ -280,3 +280,6 @@ def delete_pet(request):
         except Pet.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Pet not found'}, status=404)
     return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
+
+def pet_profile(request, slug):  # Use slug as parameter
+    pet = get_object_or_404(Pet, slug=slug)

@@ -4,3 +4,4 @@ geopy==2.4.1
 pandas==2.2.1
 
 django-allauth~=0.61.1
+django-autoslug~=1.9.9

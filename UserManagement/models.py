@@ -1,12 +1,15 @@
 import logging
 
+from autoslug import AutoSlugField
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.measure import D
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +21,7 @@ class Photo(models.Model):
     image = models.ImageField(upload_to='photos/')
     caption = models.CharField(max_length=255, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
 
     def save(self, *args, **kwargs):
         if self.user and self.pet:
@@ -51,6 +55,7 @@ class CustomUser(AbstractUser):
     friends = models.ManyToManyField('self', through='Friendship', symmetrical=False, related_name='friends_rel')
     photos = models.ManyToManyField('Photo', related_name='tagged_users', blank=True)
     profile_incomplete = models.BooleanField(default=True)
+    slug = AutoSlugField(populate_from='id', unique=True, always_update=True)
 
     @property
     def pets(self):
@@ -89,6 +94,9 @@ class CustomUser(AbstractUser):
         if self.profile_picture:
             return self.profile_picture.url
         return 'url/to/default/profile/picture'
+
+    def get_absolute_url(self):
+        return reverse('UserManagement:profile', kwargs={'slug': self.slug})
 
     @property
     def is_profile_private(self):

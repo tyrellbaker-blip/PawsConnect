@@ -1,5 +1,9 @@
+from autoslug.settings import slugify
 from django.db import models
+from django.urls import reverse
+
 from UserManagement.models import CustomUser
+from autoslug import AutoSlugField
 
 
 class Pet(models.Model):
@@ -18,10 +22,12 @@ class Pet(models.Model):
     breed = models.CharField(max_length=255, null=True, blank=True, db_index=True)
     color = models.CharField(max_length=50, null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
+    slug = AutoSlugField(populate_from='name', unique=True, always_update=True)
 
     def save(self, *args, **kwargs):
-        self.pet_type = self.pet_type.lower()  # Convert pet_type to lowercase before saving
-        super().save(*args, **kwargs)
+        self.pet_type = self.pet_type.lower()
+        # Convert pet_type to lowercase before saving
+        super(Pet, self).save(*args, **kwargs)
 
     @property
     def searchable_fields(self):
@@ -37,12 +43,17 @@ class Pet(models.Model):
             return self.profile_picture.url
         return None
 
+    def get_absolute_url(self):
+        return reverse('PetManagement:pet_profile', args=[self.slug])
+
 
 class PetTransferRequest(models.Model):
     pet = models.ForeignKey(Pet, on_delete=models.CASCADE, related_name='transfer_requests')
     from_user = models.ForeignKey(CustomUser, related_name='sent_transfers', on_delete=models.CASCADE)
     to_user = models.ForeignKey(CustomUser, related_name='received_transfers', on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
+    status = models.CharField(max_length=20,
+                              choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')],
+                              default='pending')
     timestamp = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

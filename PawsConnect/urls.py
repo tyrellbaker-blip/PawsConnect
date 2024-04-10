@@ -23,6 +23,7 @@ from django.urls import path, include
 urlpatterns = [
                   path('admin/', admin.site.urls),
                   path('user/', include('UserManagement.urls', namespace='UserManagement')),
+                  path('pet/', include('PetManagement.urls', namespace='PetManagement')),
 
                   path('', lambda request: redirect('UserManagement:login')),
                   path('accounts/', include('allauth.urls')),

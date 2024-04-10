@@ -30,7 +30,7 @@
                             <h5 class="card-title">{{ pet.name }}</h5>
                             <p class="card-text">Age: {{ pet.age }}</p>
                             <p class="card-text">Owner: {{ user.username }}</p>
-                            <a href="{% url 'PetManagement:pet_profile' pet.id %}" class="btn btn-primary">View Profile</a>
+                            <a href="{% url 'PetManagement:pet_profile' pet.slug %}" class="btn btn-primary">View Profile</a>
                             <a href="{% url 'PetManagement:delete_pet' pet.id %}" class="btn btn-danger">Delete</a>
                         </div>
                     </div>
