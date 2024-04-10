@@ -3,6 +3,7 @@ from django.urls import path
 from django.contrib.auth.views import LogoutView
 from . import views
 from .views import CustomLogoutView
+from .views import add_pet, delete_pet
 
 app_name = 'UserManagement'
 
@@ -18,4 +19,6 @@ urlpatterns = [
     path('pets/', views.pets, name='pets'),
     path('search/', views.search, name='search'),
     path('complete/', views.user_completion, name='user_completion'),
+    path('add_pet/', add_pet, name='add_pet'),
+    path('delete_pet/', delete_pet, name='delete_pet'),
 ]

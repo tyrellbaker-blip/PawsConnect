@@ -19,6 +19,10 @@ class Pet(models.Model):
     color = models.CharField(max_length=50, null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        self.pet_type = self.pet_type.lower()  # Convert pet_type to lowercase before saving
+        super().save(*args, **kwargs)
+
     @property
     def searchable_fields(self):
         return 'id', 'name', 'breed', 'pet_type'

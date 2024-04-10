@@ -7,13 +7,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.measure import D  # 'D' is used for distance measurements
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
-from django.shortcuts import redirect, render
+from django.forms import modelformset_factory
+from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.urls import reverse_lazy
+from PetManagement.forms import PetForm
 from PetManagement.models import Pet
+from UserManagement.models import CustomUser
 from .decorators import profile_completion_required
 from .forms import CustomLoginForm, UserRegistrationForm, EditProfileForm, PetFormSet, UserCompletionForm
+from .forms import PetForm  # Ensure this is correctly imported from your forms.py
 from .forms import SearchForm
-from .models import CustomUser, Photo
+from .models import Photo
 from .utils import set_profile_incomplete
 
 # Authentication Views
@@ -220,3 +226,57 @@ def friends(request):
 def pets(request):
     user_pets = Pet.objects.filter(owner=request.user)
     return render(request, 'UserManagement/pets.html', {'user_pets': user_pets})
+
+
+# UserManagement/views.py
+
+
+@login_required
+def manage_pets(request):
+    PetFormSet = modelformset_factory(Pet, form=PetForm, extra=1, can_delete=True)
+    if request.method == 'POST':
+        formset = PetFormSet(request.POST, request.FILES, queryset=Pet.objects.filter(owner=request.user))
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.owner = request.user
+                instance.save()
+            # Handle deletions
+            for obj in formset.deleted_objects:
+                obj.delete()
+            return redirect('your_redirect_url')
+    else:
+        formset = PetFormSet(queryset=Pet.objects.filter(owner=request.user))
+    return render(request, 'your_template.html', {'formset': formset})
+
+
+@login_required
+def add_pet(request):
+    if request.method == 'POST':
+        # Include request.FILES to handle file uploads correctly
+        form = PetForm(request.POST, request.FILES)
+        if form.is_valid():
+            new_pet = form.save(commit=False)
+            new_pet.owner = request.user
+            new_pet.save()
+            # This message format dynamically inserts the pet's name
+            return JsonResponse({'success': True, 'message': f'{new_pet.name} successfully added.'})
+        else:
+            # If the form is not valid, return the form errors
+            return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+    else:
+        # If the request method is not POST, indicate an invalid request
+        return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
+
+
+@login_required
+def delete_pet(request):
+    if request.method == 'POST' and 'pet_id' in request.POST:
+        try:
+            pet = Pet.objects.get(id=request.POST['pet_id'], owner=request.user)
+            pet_name = pet.name
+            pet.delete()
+            return JsonResponse({'success': True, 'message': f'{pet_name} successfully deleted.'})
+        except Pet.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Pet not found'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
