@@ -1,11 +1,9 @@
 import logging
-
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
-
 from PetManagement.models import Pet
 from .models import CustomUser
 

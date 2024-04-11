@@ -1,10 +1,9 @@
 import logging
-
 from allauth.account.views import LogoutView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.measure import D  # 'D' is used for distance measurements
+from django.contrib.gis.measure import D
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.forms import modelformset_factory
@@ -17,15 +16,14 @@ from PetManagement.models import Pet
 from UserManagement.models import CustomUser
 from .decorators import profile_completion_required
 from .forms import CustomLoginForm, UserRegistrationForm, EditProfileForm, PetFormSet, UserCompletionForm
-from .forms import PetForm  # Ensure this is correctly imported from your forms.py
+from .forms import PetForm
 from .forms import SearchForm
 from .models import Photo
 from .utils import set_profile_incomplete
 
+
 # Authentication Views
 logger = logging.getLogger(__name__)
-
-
 def user_login(request):
     if request.method == 'POST':
         form = CustomLoginForm(request.POST)
