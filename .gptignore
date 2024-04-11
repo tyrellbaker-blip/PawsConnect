@@ -1,0 +1,55 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.bin/
+
+# Logs and databases
+*.log
+db.sqlite3
+db.sqlite3-journal
+
+# Frontend related (assuming LLM's focus is backend)
+node_modules/
+static/
+media/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Development tools
+.vscode/
+.idea/
+
+# Compiled static files
+/staticfiles/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Python artifacts that don't affect backend logic
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+
+# Ignore itself to prevent loops
+.gptignore

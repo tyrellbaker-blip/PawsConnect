@@ -12,7 +12,7 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('logout/', CustomLogoutView.as_view(next_page='UserManagement:login'), name='logout'),
     path('register/', views.register, name='register'),
-    path('profile/', views.profile, name='profile'),
+    path('profile/<slug:slug>/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('friends/', views.friends, name='friends'),
     path('photos/', views.photos, name='photos'),

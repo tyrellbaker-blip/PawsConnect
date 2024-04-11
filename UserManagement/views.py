@@ -68,7 +68,7 @@ def register(request):
                 pet_formset.instance = user
                 pet_formset.save()
                 set_profile_incomplete(user)
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('UserManagement:profile')
             except IntegrityError as e:
                 logger.error("Integrity error during registration:", exc_info=True)
