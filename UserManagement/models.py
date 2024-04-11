@@ -52,11 +52,16 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True
     )
-    about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
+
     has_pets = models.BooleanField(default=False)
     profile_incomplete = models.BooleanField(default=True)
     slug = AutoSlugField(populate_from='username', unique=True)
     location = gis_models.PointField(_("location"), blank=True, null=True)
+    first_name = models.CharField(_("first name"), max_length=30, blank=True)
+    last_name = models.CharField(_("last name"), max_length=30, blank=True)
+    city = models.CharField(_("city"), max_length=100, blank=True)
+    state = models.CharField(_("state"), max_length=100, blank=True)
+    zip_code = models.CharField(_("zip code"), max_length=12, blank=True)
 
     objects = UserManager()
 
@@ -69,10 +74,13 @@ class CustomUser(AbstractUser):
         return all(getattr(self, field) for field in required_fields)
 
 
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     location = models.CharField(max_length=100, blank=True)
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
+    about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
