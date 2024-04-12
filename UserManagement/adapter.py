@@ -4,11 +4,13 @@ from django.shortcuts import resolve_url
 from django.urls import reverse
 
 
-class MyAccountAdapter(DefaultSocialAccountAdapter):
-    def get_login_redirect_url(self, request):
-        """
-        Redirect users to the profile completion page if their profile is incomplete.
-        """
-        if request.user.is_authenticated and request.user.profile_incomplete:
+class CustomAccountAdapter(DefaultSocialAccountAdapter):
+    def get_signup_redirect_url(self, request):
+        user = request.user
+        if user.profile_incomplete:
             return reverse('UserManagement:user_completion')
-        return super().get_login_redirect_url(request)
+        else:
+            return reverse('UserManagement:profile', kwargs={'slug': user.slug})
+
+    def get_provider(self, request, provider):
+        return super().get_provider(request, provider)

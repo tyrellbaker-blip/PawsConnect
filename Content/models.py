@@ -1,6 +1,5 @@
 from django.db import models
-from PetManagement.models import Pet
-from UserManagement.models import CustomUser
+
 
 
 class Post(models.Model):
@@ -9,11 +8,11 @@ class Post(models.Model):
         FRIENDS_ONLY = 'Friends Only', 'Friends Only'
 
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
-    user = models.ForeignKey(CustomUser, related_name='posts', on_delete=models.CASCADE)
+    user = models.ForeignKey('UserManagement.CustomUser', on_delete=models.CASCADE)
+    tagged_pets = models.ManyToManyField('PetManagement.Pet', blank=True)
     content = models.TextField()
     photo = models.ImageField(upload_to='post_photos/', null=True, blank=True)
     visibility = models.CharField(max_length=20, choices=VisibilityChoices.choices, default=VisibilityChoices.PUBLIC)
-    tagged_pets = models.ManyToManyField(Pet, related_name='posts', blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
@@ -23,7 +22,7 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
-    user = models.ForeignKey(CustomUser, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey('UserManagement.CustomUser', related_name='comments', on_delete=models.CASCADE)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -35,7 +34,7 @@ class Comment(models.Model):
 
 class Like(models.Model):
     post = models.ForeignKey(Post, related_name='likes', on_delete=models.CASCADE)
-    user = models.ForeignKey(CustomUser, related_name='likes', on_delete=models.CASCADE)
+    user = models.ForeignKey('UserManagement.CustomUser', related_name='likes', on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

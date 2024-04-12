@@ -21,4 +21,5 @@ urlpatterns = [
     path('complete/', views.user_completion, name='user_completion'),
     path('add_pet/', add_pet, name='add_pet'),
     path('delete_pet/', delete_pet, name='delete_pet'),
+    path('edit_pet/<slug:pet_slug>/', views.edit_pet_profile, name='edit_pet_profile'),
 ]
