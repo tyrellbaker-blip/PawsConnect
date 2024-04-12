@@ -2,6 +2,9 @@ Django==5.0.4
 Faker==24.4.0
 geopy==2.4.1
 pandas==2.2.1
-
 django-allauth~=0.61.1
 django-autoslug~=1.9.9
+django-bootstrap4
+django-imagekit
+django-debug-toolbar
+psycopg2
