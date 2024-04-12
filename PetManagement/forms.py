@@ -17,7 +17,6 @@ class PetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(PetForm, self).__init__(*args, **kwargs)
-        self.fields['slug'].required = False
 
 def get_pet_formset():
     from UserManagement.models import CustomUser  # Import here to avoid circular import
