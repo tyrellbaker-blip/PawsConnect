@@ -5,8 +5,8 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
-    <style>
-        body {
+<style>
+    body {
         background-image: url('/media/registerbk.jpg');
         background-size: cover;
         background-position: center;
@@ -33,6 +33,7 @@
     .registration-form {
         max-width: 500px;
         margin: 0 auto;
+        text-align: center;
     }
 
     .registration-form label {
@@ -53,6 +54,12 @@
         height: 30px;
     }
 
+    .registration-form input[type="file"] {
+        width: 100%;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+
     .registration-form button {
         width: auto;
     }
@@ -66,36 +73,42 @@
         margin-bottom: 10px;
     }
 
-    </style>
+    .registration-form .button-container,
+    .registration-form .file-input-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
 
-    <div class="container mt-5">
-        <div id="registerContent">
-            <h2 class="text-black">Register</h2>
-            <form method="post" enctype="multipart/form-data" class="registration-form p-3 rounded">
-                {% csrf_token %}
-                {{ user_form.as_p }}
-                <div id="pet-info-section" style="display: none;">
-                    {{ pet_formset.management_form }}
-                    <div id="pet-forms">
-                        {% for form in pet_formset %}
-                            <div class="pet-form">
-                                {{ form.as_p }}
-                            </div>
-                        {% endfor %}
+</style>
+
+<div class="container mt-5">
+    <div id="registerContent">
+        <h2 class="text-black">Register</h2>
+        <form method="post" enctype="multipart/form-data" class="registration-form p-3 rounded">
+            {% csrf_token %}
+            {{ user_form.as_p }}
+            <div id="pet-info-section" style="display: none;">
+                {{ pet_formset.management_form }}
+                <div id="pet-forms">
+                    {% for form in pet_formset %}
+                    <div class="pet-form">
+                        {{ form.as_p }}
                     </div>
-                    <button type="button" id="add-pet-form">+</button>
+                    {% endfor %}
                 </div>
+                <button type="button" id="add-pet-form">+</button>
+            </div>
+            <div class="button-container">
                 <button type="submit" class="btn btn-primary">Register</button>
-            </form>
-            <p class="mt-3">
-                <a href="{% provider_login_url 'google' %}" class="btn btn-danger">Register with Google</a>
-                <a href="{% url 'UserManagement:login' %}" class="btn btn-primary">Already have an account? Log in</a>
-            </p>
-        </div>
+            </div>
+        </form>
+        <p class="mt-3">
+            <a href="{% provider_login_url 'google' %}" class="btn btn-danger">Register with Google</a>
+            <br>
+            <a href="{% url 'UserManagement:login' %}" class="btn btn-primary">Already have an account? Log in</a>
+        </p>
     </div>
-    <br><br>
+</div>
+<br><br>
 {% endblock content %}
-
-{% block extra_body %}
-    <script src="{% static 'UserManagement/form_validation.js' %}"></script>
-{% endblock extra_body %}
