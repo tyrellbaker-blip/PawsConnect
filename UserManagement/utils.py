@@ -30,6 +30,7 @@ from .models import CustomUser  # Assuming CustomUser is in the same app
 
 
 def search_users(query=None, location_point=None, search_range=None):
+
     queryset = CustomUser.objects.all()
     if query:
         queryset = queryset.filter(
@@ -40,4 +41,13 @@ def search_users(query=None, location_point=None, search_range=None):
         queryset = queryset.annotate(
             distance=Distance('location', location_point)
         ).filter(location__distance_lte=(location_point, search_distance))
+    return queryset
+
+def search_pets(pet_id=None, name=None):
+    from PetManagement.models import Pet
+    queryset = Pet.objects.all()
+    if pet_id:
+        queryset = queryset.filter(id=pet_id)
+    if name:
+        queryset = queryset.filter(name__icontains=name)
     return queryset
