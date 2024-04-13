@@ -15,9 +15,9 @@ db.sqlite3-journal
 
 # Frontend related (assuming LLM's focus is backend)
 frontend/
-node_modules/
 static/
 media/
+node_modules/
 
 # System files
 .DS_Store
