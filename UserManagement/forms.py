@@ -55,23 +55,21 @@ class UserRegistrationForm(UserCreationForm):
         for field_name in ['password1', 'password2', 'username']:
             self.fields[field_name].help_text = None
 
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        try:
+            CustomUser.objects.get(username=username)
+            raise forms.ValidationError("A user with that username already exists.")
+        except CustomUser.DoesNotExist:
+            return username
 
-def clean_username(self):
-    username = self.cleaned_data["username"]
-    try:
-        CustomUser.objects.get(username=username)
-        raise forms.ValidationError("A user with that username already exists.")
-    except CustomUser.DoesNotExist:
-        return username
-
-
-def clean_email(self):
-    email = self.cleaned_data["email"]
-    try:
-        CustomUser.objects.get(email=email)
-        raise forms.ValidationError("A user with that email address already exists.")
-    except CustomUser.DoesNotExist:
-        return email
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        try:
+            CustomUser.objects.get(email=email)
+            raise forms.ValidationError("A user with that email address already exists.")
+        except CustomUser.DoesNotExist:
+            return email
 
 
 def clean_password2(self):
@@ -120,6 +118,7 @@ class EditProfileForm(forms.ModelForm):
         self.fields['state'].required = True
         self.fields['zip_code'].required = True
         self.fields['about_me'].initial = self.instance.profile.about_me  # Pre-populate "about me"
+
 
 class PetEditForm(forms.ModelForm):
     class Meta:

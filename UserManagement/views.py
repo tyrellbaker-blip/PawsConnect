@@ -14,6 +14,7 @@ from .decorators import profile_completion_required
 from .forms import CustomLoginForm, EditProfileForm, UserCompletionForm, PetFormSet
 from .forms import SearchForm
 from .models import Photo
+from .utils import search_pets, search_users
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +65,11 @@ def register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST, request.FILES)
         pet_formset = PetFormSet(request.POST, request.FILES)
+
         if user_form.is_valid() and pet_formset.is_valid():
             try:
-                user = user_form.save(commit=False)  # Create user object but don't save yet
-                user.save()  # Now save the user (geocoding handled by the signal)
+                user = user_form.save(commit=False)
+                user.save()
 
                 # Save pet profiles and associate them with the user
                 for form in pet_formset:
@@ -76,10 +78,12 @@ def register(request):
                         pet.owner = user
                         pet.save()
                         user.pets.add(pet)
-                        # Create and associate the PetProfile
                         PetProfile.objects.create(pet=pet)
 
-                # Login the newly registered user
+                # Mark the user's profile as complete
+                user.profile_incomplete = False
+                user.save()
+
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('UserManagement:profile', slug=user.slug)
 
@@ -87,7 +91,6 @@ def register(request):
                 messages.error(request, "Username or email already exists. Please choose another.")
             except DatabaseError as e:
                 messages.error(request, "A database error occurred. Please try again later.")
-            # Add error handling for pet creation here if needed
 
     else:
         user_form = UserRegistrationForm()
@@ -224,14 +227,14 @@ def search(request):
         search_type = form.cleaned_data['type']
         context['search_type'] = search_type
         if search_type == 'user':
-            users = CustomUser.objects.search(
+            users = search_users(
                 query=form.cleaned_data['query'],
                 location_point=form.cleaned_data.get('location_point', None),
                 search_range=form.cleaned_data.get('range', None)
             )
             context['results'] = users
         elif search_type == 'pet':
-            pets = Pet.objects.search(
+            pets = search_pets(
                 pet_id=form.cleaned_data.get('pet_id', None),
                 name=form.cleaned_data.get('pet_name', None)
             )
