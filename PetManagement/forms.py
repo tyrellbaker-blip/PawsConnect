@@ -1,9 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-
-from UserManagement.models import CustomUser
 from .models import Pet
-
 
 class PetForm(forms.ModelForm):
     name = forms.CharField(label='Name', max_length=255, required=True)
@@ -19,11 +16,11 @@ class PetForm(forms.ModelForm):
         fields = ['name', 'pet_type', 'age', 'profile_picture', 'description', 'breed', 'color']
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['slug'].required = False
+        super(PetForm, self).__init__(*args, **kwargs)
 
-
-PetFormSet = inlineformset_factory(
-    CustomUser, Pet, form=PetForm,
-    fields=['name', 'pet_type', 'age', 'profile_picture'], extra=1, can_delete=True
-)
+def get_pet_formset():
+    from UserManagement.models import CustomUser  # Import here to avoid circular import
+    return inlineformset_factory(
+        CustomUser, Pet, form=PetForm,
+        fields=['name', 'pet_type', 'age', 'profile_picture'], extra=1, can_delete=True
+    )

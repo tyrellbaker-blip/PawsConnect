@@ -1,5 +1,5 @@
 from autoslug import AutoSlugField
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
@@ -18,28 +18,17 @@ LANGUAGE_CHOICES = [
     ('it', 'Italian'),
 ]
 
+PROFILE_VISIBILITY_CHOICES = [
+    ('public', 'Public'),
+    ('friends', 'Friends'),
+    ('private', 'Private'),
+]
+
 FRIENDSHIP_STATUS_CHOICES = [
     ('pending', 'Pending'),
     ('accepted', 'Accepted'),
     ('declined', 'Declined'),
 ]
-
-
-class UserManager(models.Manager):
-    def search(self, query=None, location_point=None, search_range=None):
-        queryset = self.get_queryset()
-        if query:
-            queryset = queryset.filter(
-                Q(username__icontains=query) |
-                Q(display_name__icontains=query)
-            )
-        if location_point and search_range:
-            search_distance = D(mi=search_range)
-            queryset = queryset.annotate(
-                distance=Distance('location', location_point)
-            ).filter(location__distance_lte=(location_point, search_distance))
-        return queryset
-
 
 class CustomUser(AbstractUser):
     display_name = models.CharField(_("display name"), max_length=100, db_index=True)
@@ -52,18 +41,17 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True
     )
-
+    profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
     has_pets = models.BooleanField(default=False)
     profile_incomplete = models.BooleanField(default=True)
     slug = AutoSlugField(populate_from='username', unique=True)
     location = gis_models.PointField(_("location"), blank=True, null=True)
-    first_name = models.CharField(_("first name"), max_length=30, blank=True)
-    last_name = models.CharField(_("last name"), max_length=30, blank=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
     zip_code = models.CharField(_("zip code"), max_length=12, blank=True)
+    num_friends = models.PositiveIntegerField(default=0)
+    pets = models.ManyToManyField('PetManagement.Pet', related_name='owners', blank=True)
 
-    objects = UserManager()
 
     def get_absolute_url(self):
         return reverse('UserManagement:profile', kwargs={'slug': self.slug})
@@ -73,7 +61,17 @@ class CustomUser(AbstractUser):
         required_fields = ['first_name', 'last_name', 'profile_picture', 'has_pets']
         return all(getattr(self, field) for field in required_fields)
 
+    def clean(self):
+        super().clean()
+        self.email = self.__class__.objects.normalize_email(self.email)
 
+    def set_profile_incomplete(self):
+        required_fields = ['first_name', 'last_name', 'city', 'state', 'zip_code', 'has_pets']
+        if all(getattr(self, field) for field in required_fields):
+            self.profile_incomplete = False
+        else:
+            self.profile_incomplete = True
+        self.save()
 
 
 class UserProfile(models.Model):

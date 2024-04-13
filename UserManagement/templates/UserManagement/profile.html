@@ -14,7 +14,7 @@
     <div class="text-left mb-3">
         <a href="{% url 'UserManagement:edit_profile' %}" class="btn btn-primary">
             <i class="fas fa-cog"></i> Edit Profile
-        </a> <h1 style="text-align: center">{{ user.username }}'s Profile</h1>
+        </a> <h1 style="text-align: center">{{ user.display_name }}'s Profile</h1>
     </div>
 
     {% if user.about_me %}

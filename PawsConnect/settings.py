@@ -54,13 +54,14 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'rest_framework'
 
 ]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-SOCIALACCOUNT_ADAPTER = 'UserManagement.adapter.MyAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'UserManagement.adapter.CustomAccountAdapter'
 SITE_ID = 1
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -170,6 +171,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 LOGIN_REDIRECT_URL = 'UserManagement:profile'
 LOGOUT_REDIRECT_URL = 'UserManagement:login'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'UserManagement:user_completion'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

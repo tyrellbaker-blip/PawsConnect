@@ -1,25 +1,19 @@
 import logging
 
 from allauth.account.views import LogoutView
-from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.db import DatabaseError, IntegrityError
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, inlineformset_factory
 from django.http import JsonResponse
-from django.shortcuts import redirect, get_object_or_404
-from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy, reverse
 
-from PetManagement.forms import PetForm
-from PetManagement.models import Pet, PetTransferRequest
+from PetManagement.models import Pet, PetProfile
 from UserManagement.models import CustomUser
 from .decorators import profile_completion_required
-from .forms import CustomLoginForm, UserRegistrationForm, EditProfileForm, PetFormSet, UserCompletionForm
-from .forms import PetForm
+from .forms import CustomLoginForm, EditProfileForm, UserCompletionForm, PetFormSet
 from .forms import SearchForm
 from .models import Photo
-from .utils import set_profile_incomplete
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +28,12 @@ def user_login(request):
                 user = authenticate(request, username=username, password=password)
                 if user:
                     login(request, user)
-                    if user.profile_incomplete:
-                        logger.debug("Redirecting user with incomplete profile to completion page")
+                    print("User authenticated successfully:", user.username)  # Print username
+                    if user.is_profile_complete:
+                        print("Redirecting to profile completion page")
                         return redirect('UserManagement:user_completion')
                     else:
-                        logger.debug("Redirecting user with complete profile to profile page")
+                        print("Redirecting to profile page:", user.slug)  # Print slug
                         return redirect('UserManagement:profile', slug=user.slug)
                 else:
                     form.add_error(None, "Invalid username or password.")
@@ -56,32 +51,72 @@ def home(request):
         return render(request, 'UserManagement/home.html')
 
 
+from .forms import PetForm
+
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.db import IntegrityError, DatabaseError
+
+from .forms import UserRegistrationForm
+
+
 def register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST, request.FILES)
         pet_formset = PetFormSet(request.POST, request.FILES)
         if user_form.is_valid() and pet_formset.is_valid():
             try:
-                user = user_form.save(commit=False)
-                user.save()
-                pet_formset.instance = user
-                pet_formset.save()
-                set_profile_incomplete(user)
+                user = user_form.save(commit=False)  # Create user object but don't save yet
+                user.save()  # Now save the user (geocoding handled by the signal)
+
+                # Save pet profiles and associate them with the user
+                for form in pet_formset:
+                    if form.is_valid():
+                        pet = form.save(commit=False)
+                        pet.owner = user
+                        pet.save()
+                        user.pets.add(pet)
+                        # Create and associate the PetProfile
+                        PetProfile.objects.create(pet=pet)
+
+                # Login the newly registered user
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('UserManagement:profile', slug=user.slug)
+
             except IntegrityError as e:
-                logger.error("Integrity error during registration:", exc_info=True)
                 messages.error(request, "Username or email already exists. Please choose another.")
             except DatabaseError as e:
-                logger.error("Database error during registration:", exc_info=True)
                 messages.error(request, "A database error occurred. Please try again later.")
+            # Add error handling for pet creation here if needed
+
     else:
         user_form = UserRegistrationForm()
         pet_formset = PetFormSet()
+
     return render(request, 'UserManagement/register.html', {
         'user_form': user_form,
         'pet_formset': pet_formset
     })
+
+
+@login_required
+def add_pet(request):
+    if request.method == 'POST':
+        form = PetForm(request.POST, request.FILES)
+        if form.is_valid():
+            pet = form.save(commit=False)
+            pet.owner_id = request.user.id
+            pet.save()
+            request.user.pets.add(pet)
+
+            # Create and associate the PetProfile
+            PetProfile.objects.create(pet=pet)
+
+            messages.success(request, "Pet added successfully!")
+            return redirect('UserManagement:pets')
+    else:
+        form = PetForm()
+    return render(request, 'add_pet.html', {'form': form})
 
 
 class CustomLogoutView(LogoutView):
@@ -97,16 +132,38 @@ class CustomLogoutView(LogoutView):
 @login_required
 @profile_completion_required
 def profile(request, slug):
+    from Content.models import Post  # Import locally
     user = get_object_or_404(CustomUser, slug=slug)
+    posts = Post.objects.filter(user=user)
+
+    pet_data = []
+    for pet in user.pets.all():
+        pet_info = {
+            'profile_picture_url': pet.profile.profile_picture.url if pet.profile.profile_picture else None,
+            'profile_url': reverse('PetManagement:pet_profile', kwargs={'slug': pet.slug}),
+            'name': pet.name,
+            'age': pet.age,
+            'breed': pet.breed,
+            'about_me': pet.profile.description,  # Assuming 'description' is the "about me" field
+        }
+        pet_data.append(pet_info)
+
     context = {
-        'user': user,
-        'username': user.username,
-        'display_name': user.display_name,
-        'profile_picture_url': user.profile_picture.url if user.profile_picture else None,
-        'location': user.location,
-        'about_me': user.about_me,
-        'num_friends': user.friends.count(),
-        'pets': user.pets.all(),
+        'user': {
+            'display_name': user.display_name,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'location': user.location,
+            'about_me': user.profile.about_me,  # Include "about me" for user
+        },
+        'posts': [
+            {
+                'content': post.content,
+                'timestamp': post.timestamp,
+                # ... other post fields as needed ...
+            } for post in posts
+        ],
+        'pet_data': pet_data,
     }
     return render(request, 'UserManagement/profile.html', context)
 
@@ -130,13 +187,25 @@ def edit_profile(request):
 
 
 @login_required
+def edit_pet_profile(request, pet_slug):
+    pet = get_object_or_404(Pet, slug=pet_slug, owner=request.user)
+    if request.method == 'POST':
+        form = PetForm(request.POST, request.FILES, instance=pet)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pet profile updated successfully.")
+            return redirect('UserManagement:pets')
+    else:
+        form = PetForm(instance=pet)
+    return render(request, 'edit_pet_profile.html', {'form': form, 'pet': pet})
+
+
+@login_required
 def user_completion(request):
     if request.method == 'POST':
         form = UserCompletionForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.profile_incomplete = False
-            user.save()
+            form.save()
             messages.success(request, "Your profile is now complete!")
             return redirect('UserManagement:profile', slug=request.user.slug)
     else:
@@ -178,7 +247,7 @@ def photos(request):
 
 @login_required
 def friends(request):
-    user_friends = request.user.friends.all()
+    user_friends = request.friends.all()
     return render(request, 'UserManagement/friends.html', {'user_friends': user_friends})
 
 
@@ -201,9 +270,17 @@ def manage_pets(request):
             for obj in formset.deleted_objects:
                 obj.delete()
             return redirect('UserManagement:pets')
-    else:
-        formset = PetFormSet(queryset=Pet.objects.filter(owner=request.user))
-    return render(request, 'UserManagement/manage_pets.html', {'formset': formset})
+        else:
+            formset = PetFormSet(queryset=Pet.objects.filter(owner=request.user))
+            return render(request, 'UserManagement/manage_pets.html', {'formset': formset})
+
+
+def get_pet_formset():
+    from UserManagement.models import CustomUser  # Import locally
+    return inlineformset_factory(
+        CustomUser, Pet, form=PetForm,
+        fields=['name', 'pet_type', 'age', 'profile_picture'], extra=1, can_delete=True
+    )
 
 
 @login_required
@@ -234,10 +311,16 @@ def delete_pet(request):
     return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
 
 
-def pet_profile(request, slug):
-    pet = get_object_or_404(Pet, slug=slug)
-    context = {
-        'pet': pet,
-        'transfer_requests': PetTransferRequest.objects.filter(pet=pet),
-    }
-    return render(request, 'UserManagement/pet_profile.html', context)
+@login_required
+def create_pet_profile(request):
+    if request.method == 'POST':
+        form = PetForm(request.POST, request.FILES)
+        if form.is_valid():
+            pet = form.save(commit=False)
+            pet.owner_id = request.user.id  # Associate pet with the current user
+            pet.save()
+            request.user.pets.add(pet)  # Add pet to the user's pet list
+            return redirect('UserManagement:pets')  # Redirect to the user's pet list
+    else:
+        form = PetForm()
+    return render(request, 'create_pet_profile.html', {'form': form})

@@ -2,8 +2,6 @@ from autoslug import AutoSlugField
 from django.db import models
 from django.urls import reverse
 
-from UserManagement.models import CustomUser
-
 
 class PetManager(models.Manager):
     def search(self, pet_id=None, name=None):
@@ -15,6 +13,9 @@ class PetManager(models.Manager):
         return queryset
 
 
+
+
+
 class Pet(models.Model):
     class PetType(models.TextChoices):
         DOG = 'dog', 'Dog'
@@ -23,7 +24,7 @@ class Pet(models.Model):
         REPTILE = 'reptile', 'Reptile'
         OTHER = 'other', 'Other'
 
-    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='pets')
+    owner = models.ForeignKey('UserManagement.CustomUser', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     breed = models.CharField(max_length=100, blank=True)
     color = models.CharField(max_length=50, blank=True)
@@ -68,6 +69,7 @@ class PetPhoto(models.Model):
 
 
 class PetTransferRequest(models.Model):
+
     class TransferStatus(models.TextChoices):
         PENDING = 'pending', 'Pending'
         APPROVED = 'approved', 'Approved'
@@ -75,8 +77,9 @@ class PetTransferRequest(models.Model):
         CANCELED = 'canceled', 'Canceled'
 
     pet = models.ForeignKey(Pet, on_delete=models.CASCADE, related_name='transfer_requests')
-    from_user = models.ForeignKey(CustomUser, related_name='sent_transfers', on_delete=models.CASCADE)
-    to_user = models.ForeignKey(CustomUser, related_name='received_transfers', on_delete=models.CASCADE)
+    from_user = models.ForeignKey('UserManagement.CustomUser', related_name='sent_transfers', on_delete=models.CASCADE)
+    to_user = models.ForeignKey('UserManagement.CustomUser', related_name='received_transfers',
+                                on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=TransferStatus.choices, default=TransferStatus.PENDING)
     timestamp = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
