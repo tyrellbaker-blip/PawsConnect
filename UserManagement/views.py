@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 
-from PetManagement.models import Pet, PetTransferRequest, PetProfile
+from PetManagement.models import Pet, PetProfile
 from UserManagement.models import CustomUser
 from .decorators import profile_completion_required
 from .forms import CustomLoginForm, EditProfileForm, UserCompletionForm, PetFormSet
@@ -28,11 +28,12 @@ def user_login(request):
                 user = authenticate(request, username=username, password=password)
                 if user:
                     login(request, user)
+                    print("User authenticated successfully:", user.username)  # Print username
                     if user.is_profile_complete:
-                        logger.debug("Redirecting user with incomplete profile to completion page")
+                        print("Redirecting to profile completion page")
                         return redirect('UserManagement:user_completion')
                     else:
-                        logger.debug("Redirecting user with complete profile to profile page")
+                        print("Redirecting to profile page:", user.slug)  # Print slug
                         return redirect('UserManagement:profile', slug=user.slug)
                 else:
                     form.add_error(None, "Invalid username or password.")
@@ -57,18 +58,16 @@ from django.shortcuts import render, redirect
 from django.db import IntegrityError, DatabaseError
 
 from .forms import UserRegistrationForm
-from .utils import create_user
 
 
 def register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST, request.FILES)
         pet_formset = PetFormSet(request.POST, request.FILES)
-
         if user_form.is_valid() and pet_formset.is_valid():
             try:
-                user = user_form.save(commit=False)
-                user.save()  # Geocoding handled by the signal
+                user = user_form.save(commit=False)  # Create user object but don't save yet
+                user.save()  # Now save the user (geocoding handled by the signal)
 
                 # Save pet profiles and associate them with the user
                 for form in pet_formset:
@@ -77,10 +76,10 @@ def register(request):
                         pet.owner = user
                         pet.save()
                         user.pets.add(pet)
-
                         # Create and associate the PetProfile
                         PetProfile.objects.create(pet=pet)
 
+                # Login the newly registered user
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('UserManagement:profile', slug=user.slug)
 
@@ -89,6 +88,7 @@ def register(request):
             except DatabaseError as e:
                 messages.error(request, "A database error occurred. Please try again later.")
             # Add error handling for pet creation here if needed
+
     else:
         user_form = UserRegistrationForm()
         pet_formset = PetFormSet()
@@ -97,6 +97,7 @@ def register(request):
         'user_form': user_form,
         'pet_formset': pet_formset
     })
+
 
 @login_required
 def add_pet(request):
@@ -183,6 +184,7 @@ def edit_profile(request):
     else:
         form = EditProfileForm(instance=request.user)
     return render(request, 'UserManagement/edit_profile.html', {'form': form})
+
 
 @login_required
 def edit_pet_profile(request, pet_slug):
@@ -322,4 +324,3 @@ def create_pet_profile(request):
     else:
         form = PetForm()
     return render(request, 'create_pet_profile.html', {'form': form})
-
