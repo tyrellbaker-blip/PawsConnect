@@ -5,6 +5,8 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.db import models
 from django.db.models import Q
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
@@ -30,6 +32,7 @@ FRIENDSHIP_STATUS_CHOICES = [
     ('declined', 'Declined'),
 ]
 
+
 class CustomUser(AbstractUser):
     display_name = models.CharField(_("display name"), max_length=100, db_index=True)
     preferred_language = models.CharField(_("preferred language"), max_length=5, choices=LANGUAGE_CHOICES, default='en')
@@ -51,7 +54,15 @@ class CustomUser(AbstractUser):
     zip_code = models.CharField(_("zip code"), max_length=12, blank=True)
     num_friends = models.PositiveIntegerField(default=0)
     pets = models.ManyToManyField('PetManagement.Pet', related_name='owners', blank=True)
+    friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
 
+    @property
+    def outgoing_friend_requests(self):
+        return self.sent_friendships.filter(status='pending')
+
+    @property
+    def incoming_friend_requests(self):
+        return self.received_friendships.filter(status='pending')
 
     def get_absolute_url(self):
         return reverse('UserManagement:profile', kwargs={'slug': self.slug})
@@ -106,4 +117,20 @@ class Friendship(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user_from.username} -> {self.user_to.username}"
+        return f"{self.user_from.username} -> {self.user_to.username} ({self.status})"
+
+    def accept(self):
+        self.status = 'accepted'
+        self.save()
+
+    def reject(self):
+        self.status = 'rejected'
+        self.save()
+
+@receiver(post_save, sender=Friendship)
+def update_friends_count(sender, instance, created, **kwargs):
+    if instance.status == 'accepted' and not created:
+        instance.user_from.num_friends += 1
+        instance.user_from.save(update_fields=['num_friends'])
+        instance.user_to.num_friends += 1
+        instance.user_to.save(update_fields=['num_friends'])

@@ -1,10 +1,13 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import PetViewSet, PetTransferRequestViewSet
 
-from UserManagement import views
+router = DefaultRouter()
+router.register(r'pets', PetViewSet, basename='pet')
+router.register(r'pet-transfer-requests', PetTransferRequestViewSet, basename='pet-transfer-request')
 
 app_name = 'PetManagement'
 
 urlpatterns = [
-    # ... other url patterns ...
-    # ... other url patterns ...
+    path('', include(router.urls)),
 ]

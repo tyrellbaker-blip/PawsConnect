@@ -1,15 +1,14 @@
 from django.db import models
 
 
-
 class Post(models.Model):
     class VisibilityChoices(models.TextChoices):
         PUBLIC = 'Public', 'Public'
         FRIENDS_ONLY = 'Friends Only', 'Friends Only'
 
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
-    user = models.ForeignKey('UserManagement.CustomUser', on_delete=models.CASCADE)
-    tagged_pets = models.ManyToManyField('PetManagement.Pet', blank=True)
+    user = models.ForeignKey('UserManagement.CustomUser', on_delete=models.CASCADE, related_name='posts')
+    tagged_pets = models.ManyToManyField('PetManagement.Pet',related_name='posts', blank=True)
     content = models.TextField()
     photo = models.ImageField(upload_to='post_photos/', null=True, blank=True)
     visibility = models.CharField(max_length=20, choices=VisibilityChoices.choices, default=VisibilityChoices.PUBLIC)

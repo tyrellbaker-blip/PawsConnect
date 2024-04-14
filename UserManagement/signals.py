@@ -28,12 +28,12 @@ def geocode_user_location(sender, instance=None, created=False, **kwargs):
             location = geolocator.geocode(address)
 
             if location:
-                # Create a Point object from latitude and longitude
                 instance.location = Point(location.longitude, location.latitude)
-                # Update the instance without triggering a loop
-                CustomUser.objects.filter(pk=instance.pk).update(location=instance.location)
+                instance.save()  # Update the instance
         except (GeocoderTimedOut, GeocoderUnavailable) as e:
-            logger.warning(f"Geocoding error for user {instance.pk}: {e}")
+            logger.error(f"Geocoding error for user {instance.pk}: {e}")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during geocoding: {e}")
 
 
 # Clear all sessions on shutdown
