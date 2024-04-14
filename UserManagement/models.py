@@ -55,6 +55,7 @@ class CustomUser(AbstractUser):
     num_friends = models.PositiveIntegerField(default=0)
     pets = models.ManyToManyField('PetManagement.Pet', related_name='owners', blank=True)
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
+    email = models.EmailField(unique=True, null=False)
 
     @property
     def outgoing_friend_requests(self):

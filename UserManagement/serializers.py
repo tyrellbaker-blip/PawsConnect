@@ -7,7 +7,7 @@ class CustomUserSimpleSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['username', 'display_name', 'profile_picture',
                   'location', 'pets', 'preferred_language',
-                  'sent_friendships', 'received_friendships']
+                  'sent_friendships', 'received_friendships','city', 'state', 'zip_code']
 
 class FriendshipSerializer(serializers.ModelSerializer):
     user_from = serializers.PrimaryKeyRelatedField(read_only=True)
