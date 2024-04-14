@@ -179,10 +179,10 @@ class SearchForm(forms.Form):
         ('pet', 'Pet'),
     ]
     DISTANCE_CHOICES = [
-        ('5', '5 miles'),
-        ('10', '10 miles'),
-        ('20', '20 miles'),
-        ('50', '50+ miles'),
+        (5, '5 miles'),
+        (10, '10 miles'),
+        (20, '20 miles'),
+        (50, '50+ miles'),
     ]
     query = forms.CharField(required=False)
     type = forms.ChoiceField(choices=QUERY_CHOICES)
@@ -191,6 +191,19 @@ class SearchForm(forms.Form):
     zip_code = forms.CharField(max_length=12, required=False)
     range = forms.ChoiceField(choices=DISTANCE_CHOICES, required=False)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        search_type = cleaned_data.get('type')
+        city = cleaned_data.get('city')
+        state = cleaned_data.get('state')
+        zip_code = cleaned_data.get('zip_code')
+
+        if search_type == 'user' and any([city, state, zip_code]) and not all([city, state, zip_code]):
+            raise ValidationError(
+                "Please provide a complete address: city, state, and zip code for location-based searches."
+            )
+
+        return cleaned_data
     def clean(self):
         cleaned_data = super().clean()
         search_type = cleaned_data.get('type')

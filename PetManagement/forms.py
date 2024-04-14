@@ -2,6 +2,7 @@ from django import forms
 from django.forms import inlineformset_factory
 from .models import Pet
 
+
 class PetForm(forms.ModelForm):
     name = forms.CharField(label='Name', max_length=255, required=True)
     pet_type = forms.ChoiceField(label='Type', choices=Pet.PetType.choices, required=True)
@@ -17,6 +18,7 @@ class PetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(PetForm, self).__init__(*args, **kwargs)
+
 
 def get_pet_formset():
     from UserManagement.models import CustomUser  # Import here to avoid circular import
