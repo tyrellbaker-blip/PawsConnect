@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from rest_framework import viewsets, status, serializers
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -42,16 +43,20 @@ def user_login(request):
             if user:
                 login(request, user)
                 logger.info(f"User authenticated successfully: {user.username}")
-                if user.profile_incomplete:
-                    return redirect('UserManagement:user_completion')
-                else:
-                    return redirect('UserManagement:profile', slug=user.slug)
+                token, created = Token.objects.get_or_create(user=user)
+
+                # Instead of redirect, return JSON data
+                redirect_url = 'user_completion' if user.profile_incomplete else f'profile/{user.slug}'
+                return JsonResponse({
+                    'token': token.key,
+                    'redirect_url': redirect_url
+                })
             else:
-                form.add_error(None, "Invalid username or password.")
+                return JsonResponse({'error': "Invalid username or password"}, status=400)
+        return render(request, 'UserManagement/login.html', {'form': form})
     else:
         form = CustomLoginForm()
-    return render(request, 'UserManagement/login.html', {'form': form})
-
+        return render(request, 'UserManagement/login.html', {'form': form})
 
 def home(request):
     if request.user.is_authenticated:
@@ -270,13 +275,17 @@ class FriendshipViewSet(viewsets.ModelViewSet):
         if friendship.user_from == request.user or friendship.user_to == request.user:
             return super().destroy(request, *args, **kwargs)
         else:
-            return Response({'error': 'You do not have permission to delete this friendship.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'You do not have permission to delete this friendship.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
     def update(self, request, *args, **kwargs):
         friendship = self.get_object()
         if not (friendship.user_from == request.user or friendship.user_to == request.user):
-            return Response({'error': 'You do not have permission to modify this friendship.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'You do not have permission to modify this friendship.'},
+                            status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
+
+
 @login_required
 def delete_pet(request):
     if request.method == 'POST' and 'pet_id' in request.POST:

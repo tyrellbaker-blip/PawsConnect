@@ -1,39 +1,57 @@
 <template>
   <div>
     <div class="pet-profile mb-3">
-      <a :href="editPetUrl" class="btn btn-primary">
+      <router-link :to="editPetUrl" class="btn btn-primary">
         <i class="fas fa-cog"></i> Edit Profile
-      </a>
-      <h1 style="text-align: center">{{ petProfile.owner }}'s Pet Profile</h1>
-
-      <p v-if="petProfile.name">Name: {{ petProfile.name }}</p>
-      <p v-if="petProfile.species">Species: {{ petProfile.species }}</p>
-      <p v-if="petProfile.breed">Breed: {{ petProfile.breed }}</p>
-      <p v-if="petProfile.age">Age: {{ petProfile.age }}</p>
+      </router-link>
+      <h1 style="text-align: center">{{ petProfile.pet.owner.username }}'s Pet Profile</h1>
+      <p v-if="petProfile.pet.name">Name: {{ petProfile.pet.name }}</p>
+      <p v-if="petProfile.pet.breed">Breed: {{ petProfile.pet.breed }}</p>
+      <p v-if="petProfile.pet.color">Color: {{ petProfile.pet.color }}</p>
+      <p v-if="petProfile.pet.age">Age: {{ petProfile.pet.age }}</p>
+      <p v-if="petProfile.pet.get_display_pet_type">Pet Type: {{ petProfile.pet.get_display_pet_type }}</p>
+      <p v-if="petProfile.description">Description: {{ petProfile.description }}</p>
       <p v-if="isOwner">This is your pet!</p>
-
-      <br><hr class="left-align-hr">
+      <br>
+      <hr class="left-align-hr">
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'PetProfileComponent',
   data() {
     return {
       petProfile: {
-        owner: 'Username',
-        name: 'Fluffy',
-        species: 'Cat',
-        breed: 'Maine Coon',
-        age: 5
+        pet: {},
+        description: ''
       },
-      isOwner: true,
+      isOwner: false,
       editPetUrl: '/edit-pet-profile'
+    };
+  },
+  mounted() {
+    this.fetchPetProfile();
+  },
+  methods: {
+    async fetchPetProfile() {
+      try {
+        const petSlug = this.$route.params.slug;
+        const response = await axios.get(`/pet-profiles/${petSlug}/`);
+        this.petProfile = response.data;
+
+        // Check if the logged-in user is the owner of the pet
+        const userId = localStorage.getItem('userId');
+        this.isOwner = (this.petProfile.pet.owner === userId);
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
-}
+};
 </script>
 
 <style scoped>

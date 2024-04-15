@@ -7,8 +7,8 @@ from PetManagement.models import Pet, PetTransferRequest
 class PetTransferRequestAPITests(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.sender = CustomUser.objects.create_user(username='sender', password='testpass')
-        cls.recipient = CustomUser.objects.create_user(username='recipient', password='testpass')
+        cls.sender = CustomUser.objects.create_user(username='sender', email='sender@example.com', password='testpass')
+        cls.recipient = CustomUser.objects.create_user(username='recipient', email='recipient@example.com', password='testpass')
         cls.pet = Pet.objects.create(name='Buddy', owner=cls.sender, pet_type='Dog', age=3)
 
     def test_create_transfer_request(self):

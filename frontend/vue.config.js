@@ -1,14 +1,26 @@
-const { defineConfig } = require('@vue/cli-service');
+const path = require('path');
 
-module.exports = defineConfig({
+module.exports = {
+  // Ensures dependencies are transpiled correctly
   transpileDependencies: true,
+
+  // DevServer configuration to handle API requests in development
   devServer: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://localhost:8080',
         changeOrigin: true,
         pathRewrite: { '^/api': '' },
       }
     }
+  },
+
+  // Webpack configuration to define the '@' alias
+  configureWebpack: {
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src/'),  // Sets '@' to reference the 'src' directory
+      }
+    }
   }
-});
+};

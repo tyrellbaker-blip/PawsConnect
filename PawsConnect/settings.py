@@ -54,7 +54,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'rest_framework'
+    'rest_framework',
+    'rest_framework.authtoken'
 
 ]
 AUTHENTICATION_BACKENDS = [
@@ -82,6 +83,12 @@ MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 ROOT_URLCONF = "PawsConnect.urls"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
 
 DATABASES = {
     'default': {
