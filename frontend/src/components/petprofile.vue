@@ -29,7 +29,7 @@ export default {
         breed: 'Maine Coon',
         age: 5
       },
-      isOwner: true,  // This would be determined based on user authentication logic
+      isOwner: true,
       editPetUrl: '/edit-pet-profile'
     }
   }
