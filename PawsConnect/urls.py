@@ -21,11 +21,10 @@ from django.shortcuts import redirect
 from django.urls import path, include
 
 urlpatterns = [
-                  path('admin/', admin.site.urls),
-                  path('user/', include('UserManagement.urls', namespace='UserManagement')),
-                  path('pet/', include('PetManagement.urls', namespace='PetManagement')),
-                  path('content/', include('Content.urls', namespace='content')),
-                  path('', lambda request: redirect('UserManagement:login')),
-                  path('accounts/', include('allauth.urls')),
-                  # Redirect the root URL
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('admin/', admin.site.urls),
+    path('user/', include('UserManagement.urls', namespace='UserManagement')),
+    path('pet/', include('PetManagement.urls', namespace='PetManagement')),
+    path('content/', include('Content.urls', namespace='content')),
+    path('', lambda request: redirect('UserManagement:login')),
+    path('accounts/', include('allauth.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

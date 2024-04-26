@@ -1,1 +1,1 @@
-default_app_config = 'UserManagement.apps.ManagementConfig'
+default_app_config = 'UserManagement.apps.UserManagementConfig'

@@ -1,10 +1,7 @@
 from autoslug import AutoSlugField
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.measure import D
 from django.db import models
-from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -91,6 +88,7 @@ class UserProfile(models.Model):
     location = models.CharField(max_length=100, blank=True)
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
     about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
+
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

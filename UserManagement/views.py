@@ -1,239 +1,244 @@
 import logging
 
-from allauth.account.views import LogoutView
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy, reverse
-from rest_framework import viewsets, status, serializers
+from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status, mixins, serializers
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from Content.models import Post
+from Content.serializers import PostSerializer
 from PetManagement.models import Pet, PetProfile
-from .decorators import profile_completion_required
-from .forms import CustomLoginForm, EditProfileForm, UserCompletionForm, PetFormSet, SearchForm, UserRegistrationForm, \
-    PetForm
-from .models import CustomUser, Photo, Friendship
-from .serializers import CustomUserSerializer, FriendshipSerializer
+from PetManagement.serializers import PetSerializer
+from UserManagement.models import CustomUser
+from .forms import CustomLoginForm, EditProfileForm, PetForm, UserCompletionForm
+from .models import Photo, Friendship
+from .serializers import CustomUserSerializer, FriendshipSerializer, PhotoSerializer
 from .utils import search_pets, search_users
 
 logger = logging.getLogger(__name__)
 
 
+class RegistrationViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        user.set_profile_incomplete()  # Set profile_incomplete based on required fields
+        # Perform any additional actions after user creation
+        # For example, creating pet profiles, setting default values, etc.
+
+
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save()
 
 
-def user_login(request):
-    if request.method == 'POST':
-        form = CustomLoginForm(request.POST)
+class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    serializer_class = CustomLoginForm.get_serializer()
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        form = CustomLoginForm(request.data)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user:
-                login(request, user)
                 logger.info(f"User authenticated successfully: {user.username}")
                 token, created = Token.objects.get_or_create(user=user)
 
-                # Instead of redirect, return JSON data
                 redirect_url = 'user_completion' if user.profile_incomplete else f'profile/{user.slug}'
-                return JsonResponse({
-                    'token': token.key,
-                    'redirect_url': redirect_url
-                })
+                response_data = {
+                    'redirect_url': redirect_url,
+                    'token': token.key
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
             else:
-                return JsonResponse({'error': "Invalid username or password"}, status=400)
-        return render(request, 'UserManagement/login.html', {'form': form})
-    else:
-        form = CustomLoginForm()
-        return render(request, 'UserManagement/login.html', {'form': form})
-
-def home(request):
-    if request.user.is_authenticated:
-        return redirect('UserManagement:profile', slug=request.user.slug)
-    else:
-        return render(request, 'UserManagement/home.html')
+                return Response({'error': "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def register(request):
-    if request.method == 'POST':
-        user_form = UserRegistrationForm(request.POST, request.FILES)
-        pet_formset = PetFormSet(request.POST, request.FILES)
+class LogoutViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
 
-        if user_form.is_valid() and pet_formset.is_valid():
-            user = user_form.save(commit=False)
-            user.save()
-
-            for form in pet_formset:
-                if form.is_valid():
-                    pet = form.save(commit=False)
-                    pet.owner = user
-                    pet.save()
-                    user.pets.add(pet)
-                    PetProfile.objects.create(pet=pet)
-
-            user.profile_incomplete = False
-            user.save()
-
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('UserManagement:profile', slug=user.slug)
-    else:
-        user_form = UserRegistrationForm()
-        pet_formset = PetFormSet()
-
-    return render(request, 'UserManagement/register.html', {
-        'user_form': user_form,
-        'pet_formset': pet_formset
-    })
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Logging out user: {request.user}")
+        request.user.auth_token.delete()
+        return Response({'message': 'User logged out successfully'}, status=status.HTTP_200_OK)
 
 
-@login_required
-def add_pet(request):
-    if request.method == 'POST':
-        form = PetForm(request.POST, request.FILES)
+class AddPetViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    serializer_class = PetForm
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        form = PetForm(request.data, request.FILES)
         if form.is_valid():
             pet = form.save(commit=False)
             pet.owner = request.user
             pet.save()
             PetProfile.objects.create(pet=pet)
-            return JsonResponse({'success': True, 'message': f'{pet.name} successfully added.'})
+            return Response({'success': True, 'message': f'{pet.name} successfully added.'},
+                            status=status.HTTP_201_CREATED)
         else:
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-    else:
-        return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
+            return Response({'success': False, 'errors': form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomLogoutView(LogoutView):
-    next_page = reverse_lazy('UserManagement:login')
+class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
 
-    def dispatch(self, request, *args, **kwargs):
-        logger.info(f"CustomLogoutView: Logging out user: {request.user}")
-        response = super().dispatch(request, *args, **kwargs)
-        logger.info("CustomLogoutView: User logged out.")
-        return response
+    def retrieve(self, request, *args, **kwargs):
+        user = self.get_object()
+        posts = Post.objects.filter(user=user)
 
+        pet_data = []
+        for pet in user.pets.all():
+            pet_info = {
+                'profile_picture_url': pet.profile.profile_picture.url if pet.profile.profile_picture else None,
+                'profile_url': f'/pet/{pet.slug}/',
+                'name': pet.name,
+                'age': pet.age,
+                'breed': pet.breed,
+                'about_me': pet.profile.description,
+            }
+            pet_data.append(pet_info)
 
-@login_required
-@profile_completion_required
-def profile(request, slug):
-    user = get_object_or_404(CustomUser, slug=slug)
-    posts = Post.objects.filter(user=user)
-
-    pet_data = []
-    for pet in user.pets.all():
-        pet_info = {
-            'profile_picture_url': pet.profile.profile_picture.url if pet.profile.profile_picture else None,
-            'profile_url': reverse('PetManagement:pet_profile', kwargs={'slug': pet.slug}),
-            'name': pet.name,
-            'age': pet.age,
-            'breed': pet.breed,
-            'about_me': pet.profile.description,
+        context = {
+            'user': {
+                'display_name': user.display_name,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'location': user.location,
+                'about_me': user.profile.about_me,
+            },
+            'posts': PostSerializer(posts, many=True).data,
+            'pet_data': pet_data,
         }
-        pet_data.append(pet_info)
-
-    context = {
-        'user': {
-            'display_name': user.display_name,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'location': user.location,
-            'about_me': user.profile.about_me,
-        },
-        'posts': posts,
-        'pet_data': pet_data,
-    }
-    return render(request, 'UserManagement/profile.html', context)
+        return Response(context, status=status.HTTP_200_OK)
 
 
-@login_required
-def edit_profile(request):
-    if request.method == 'POST':
-        form = EditProfileForm(request.POST, request.FILES, instance=request.user)
+class EditProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = EditProfileForm
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        form = EditProfileForm(request.data, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            return redirect('UserManagement:profile', slug=request.user.slug)
-    else:
-        form = EditProfileForm(instance=request.user)
-    return render(request, 'UserManagement/edit_profile.html', {'form': form})
+            return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
-def edit_pet_profile(request, pet_slug):
-    pet = get_object_or_404(Pet, slug=pet_slug, owner=request.user)
-    if request.method == 'POST':
-        form = PetForm(request.POST, request.FILES, instance=pet)
+class EditPetProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = Pet.objects.all()
+    serializer_class = PetForm
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+
+    def update(self, request, *args, **kwargs):
+        pet = self.get_object()
+        if pet.owner != request.user:
+            return Response({'error': 'You do not have permission to edit this pet profile'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        form = PetForm(request.data, request.FILES, instance=pet)
         if form.is_valid():
             form.save()
-            return redirect('UserManagement:pets')
-    else:
-        form = PetForm(instance=pet)
-    return render(request, 'UserManagement/edit_pet_profile.html', {'form': form, 'pet': pet})
+            return Response({'message': 'Pet profile updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
-def user_completion(request):
-    if request.method == 'POST':
-        form = UserCompletionForm(request.POST, request.FILES, instance=request.user)
+class UserCompletionViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserCompletionForm
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'  # Change this to 'slug'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object() # Retrieve the instance from the queryset
+        form = UserCompletionForm(request.data, request.FILES, instance=instance)
+
         if form.is_valid():
             form.save()
-            return redirect('UserManagement:profile', slug=request.user.slug)
-    else:
-        form = UserCompletionForm(instance=request.user)
-    return render(request, 'UserManagement/user_completion.html', {'form': form})
+            return Response({'message': 'User profile completed successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def search(request):
-    form = SearchForm(request.GET or None)
-    context = {
-        'form': form,
-        'search_type': None,
-        'results': None,
-    }
-    if form.is_valid():
-        search_type = form.cleaned_data['type']
-        context['search_type'] = search_type
+class SearchViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        form_data = request.query_params
+        search_type = form_data.get('type')
+        context = {
+            'search_type': search_type,
+            'results': None,
+        }
+
         if search_type == 'user':
             users = search_users(
-                query=form.cleaned_data['query'],
-                location_point=form.cleaned_data.get('location_point', None),
-                search_range=form.cleaned_data.get('range', None)
+                query=form_data.get('query'),
+                location_point=form_data.get('location_point', None),
+                search_range=form_data.get('range', None)
             )
-            context['results'] = users
+            context['results'] = CustomUserSerializer(users, many=True).data
         elif search_type == 'pet':
             pets = search_pets(
-                pet_id=form.cleaned_data.get('pet_id', None),
-                name=form.cleaned_data.get('pet_name', None)
+                pet_id=form_data.get('pet_id', None),
+                name=form_data.get('pet_name', None)
             )
-            context['results'] = pets
-    return render(request, 'UserManagement/search.html', context)
+            context['results'] = PetSerializer(pets, many=True).data
+
+        return Response(context, status=status.HTTP_200_OK)
 
 
-@login_required
-def photos(request):
-    user_photos = Photo.objects.filter(user=request.user)
-    return render(request, 'UserManagement/photos.html', {'user_photos': user_photos})
+class PhotoViewSet(viewsets.ModelViewSet):
+    queryset = Photo.objects.all()
+    serializer_class = PhotoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        return Photo.objects.filter(user=self.request.user)
 
 
-@login_required
-def friends(request):
-    user_friends = request.user.profile.friends.all()
-    return render(request, 'UserManagement/friends.html', {'user_friends': user_friends})
+class FriendsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.profile.friends.all()
 
 
-@login_required
-def pets(request):
-    user_pets = Pet.objects.filter(owner=request.user)
-    return render(request, 'UserManagement/pets.html', {'user_pets': user_pets})
+class PetsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Pet.objects.all()
+    serializer_class = PetSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Pet.objects.filter(owner=self.request.user)
 
 
 class FriendshipViewSet(viewsets.ModelViewSet):
@@ -250,7 +255,7 @@ class FriendshipViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError('A friendship request already exists between these users.')
         serializer.save(user_from=user_from)
 
-    @action(detail=True, methods=['post'], name='Accept Friendship')
+    @action(detail=True, methods=['post'], name='Accept Friendship', permission_classes=[IsAuthenticated])
     def accept(self, request, pk=None):
         friendship = self.get_object()
         if friendship.user_to == request.user and friendship.status == 'pending':
@@ -260,7 +265,7 @@ class FriendshipViewSet(viewsets.ModelViewSet):
         else:
             return Response({'error': 'Unauthorized or invalid state'}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post'], name='Reject Friendship')
+    @action(detail=True, methods=['post'], name='Reject Friendship', permission_classes=[IsAuthenticated])
     def reject(self, request, pk=None):
         friendship = self.get_object()
         if friendship.user_to == request.user and friendship.status == 'pending':
@@ -286,13 +291,31 @@ class FriendshipViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
 
-@login_required
-def delete_pet(request):
-    if request.method == 'POST' and 'pet_id' in request.POST:
-        try:
-            pet = Pet.objects.get(id=request.POST['pet_id'], owner=request.user)
-            pet.delete()
-            return JsonResponse({'success': True, 'message': 'Pet successfully deleted.'})
-        except Pet.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Pet not found'}, status=404)
-    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=405)
+class DeletePetViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = Pet.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        pet = get_object_or_404(Pet, id=kwargs['pk'], owner=request.user)
+        pet.delete()
+        return Response({'success': True, 'message': 'Pet successfully deleted.'}, status=status.HTTP_200_OK)
+
+
+class FeedPagination(PageNumberPagination):
+    page_size = 10  # Number of posts per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class ProfileFeedViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = FeedPagination
+
+    def get_queryset(self):
+        user = get_object_or_404(CustomUser, slug=self.kwargs['slug'])
+        friends = Friendship.objects.filter(user_from=user, status='accepted').values_list('user_to', flat=True)
+        feed = Post.objects.filter(user__in=friends, visibility=Post.VisibilityChoices.FRIENDS_ONLY)
+        feed |= Post.objects.filter(user=user)
+        feed |= Post.objects.filter(visibility=Post.VisibilityChoices.PUBLIC)
+        return feed.distinct().order_by('-timestamp')

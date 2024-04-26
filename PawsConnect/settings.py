@@ -45,9 +45,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'debug_toolbar',
     'django.contrib.gis',
-    "UserManagement",
     "Content",
     "PetManagement",
+    'UserManagement.apps.UserManagementConfig',
     "bootstrap4",
     'django.contrib.sites',
     'allauth',
@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'corsheaders',
+    'django_extensions'
 
 ]
 AUTHENTICATION_BACKENDS = [
@@ -74,6 +76,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Ensure session is available
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Ensure user is authenticated
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -81,6 +84,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'UserManagement.middleware.ProfileCompletionMiddleware',  # Moved after session and authentication
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8080',
 ]
 ROOT_URLCONF = "PawsConnect.urls"
 
@@ -93,7 +99,7 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'pawsconnect',
+        'NAME': 'paws_reconnect',
         'USER': 'tyrellbaker',
         'PASSWORD': config('DATABASE_PASSWORD'),
         'HOST': 'localhost',
