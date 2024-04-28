@@ -45,7 +45,7 @@ const actions = {
   },
   async register({ commit }, userData) {
     try {
-      const response = await axios.post('/register/', userData);
+      const response = await axios.post('http://127.0.0.1:8000/user/register/', userData);
       commit('SET_TOKEN', response.data.token); // Save the token if registration logs the user in
       commit('SET_USER', response.data.user); // Set user data if included in the registration response
       localStorage.setItem('user-token', response.data.token); // Persist the token in local storage

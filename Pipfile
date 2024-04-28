@@ -8,6 +8,10 @@ django = "*"
 faker = "*"
 your-app = "*"
 pandas = "*"
+django-autoslug = "*"
+djangorestframework = "*"
+geopy = "*"
+django-allauth = "*"
 
 [dev-packages]
 

@@ -12,7 +12,7 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 from geopy.geocoders import GoogleV3
 
 from PetManagement.models import PetProfile, Pet
-from .models import CustomUser, UserProfile  # Ensure this matches your user model import
+from .models import CustomUser  # Ensure this matches your user model import
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -54,11 +54,6 @@ def mark_profile_incomplete(sender, **kwargs):
     user = kwargs.pop('user')
     CustomUser.objects.filter(pk=user.pk).update(profile_incomplete=True, slug=F('slug'))
 
-
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=Pet)

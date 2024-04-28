@@ -1,8 +1,8 @@
 from autoslug import AutoSlugField
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -53,6 +53,7 @@ class CustomUser(AbstractUser):
     pets = models.ManyToManyField('PetManagement.Pet', related_name='owners', blank=True)
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
     email = models.EmailField(unique=True, null=False)
+    about_me = models.TextField(_("about me"), blank=True)
 
     @property
     def outgoing_friend_requests(self):
@@ -74,6 +75,15 @@ class CustomUser(AbstractUser):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
 
+    def profile_changed(self, updated_data):
+        """
+        Checks if any of the profile fields have changed.
+        Returns True if any of the profile fields have changed, False otherwise.
+        """
+        profile_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
+                          'has_pets', 'about_me']
+        return any(getattr(self, field) != updated_data.get(field, getattr(self, field)) for field in profile_fields)
+
     def set_profile_incomplete(self):
         required_fields = ['first_name', 'last_name', 'city', 'state', 'zip_code', 'has_pets']
         if all(getattr(self, field) for field in required_fields):
@@ -81,17 +91,6 @@ class CustomUser(AbstractUser):
         else:
             self.profile_incomplete = True
         self.save()
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
-    location = models.CharField(max_length=100, blank=True)
-    friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
-    about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
-
-
-    def __str__(self):
-        return f"{self.user.username}'s Profile"
 
 
 class Photo(models.Model):
@@ -125,6 +124,7 @@ class Friendship(models.Model):
     def reject(self):
         self.status = 'rejected'
         self.save()
+
 
 @receiver(post_save, sender=Friendship)
 def update_friends_count(sender, instance, created, **kwargs):

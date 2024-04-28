@@ -11,7 +11,7 @@ class PostSerializer(serializers.ModelSerializer):
     tagged_pets = serializers.PrimaryKeyRelatedField(
         queryset=Pet.objects.all(),
         many=True,
-        required=False  # Not all posts may require pet tags
+        required=False
     )
     visibility = serializers.ChoiceField(choices=Post.VisibilityChoices.choices)
     can_edit = serializers.SerializerMethodField()

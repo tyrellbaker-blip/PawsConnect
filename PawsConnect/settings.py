@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     "Content",
     "PetManagement",
     'UserManagement.apps.UserManagementConfig',
-    "bootstrap4",
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -71,7 +70,8 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
-
+GDAL_LIBRARY_PATH = '/opt/homebrew/Cellar/gdal/3.8.5_2/lib/libgdal.dylib'
+GEOS_LIBRARY_PATH = '/opt/homebrew/lib/libgeos_c.dylib'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Ensure session is available
@@ -200,3 +200,4 @@ LOGGING = {
         },
     },
 }
+

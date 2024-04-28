@@ -8,13 +8,12 @@ class PetSerializer(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
     can_transfer = serializers.SerializerMethodField()
+    profile_picture_url = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
 
-    # Use SerializerMethodField
 
     def validate_pet_type(self, value):
-        # Normalize the pet type to lowercase
         normalized_value = value.lower()
-        # Check if the normalized value is in the allowed choices
         choices = {choice.lower(): choice for choice, _ in Pet.PetType.choices}
         if normalized_value not in choices:
             raise serializers.ValidationError("This pet type is not allowed.")
@@ -22,7 +21,7 @@ class PetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pet
-        fields = ['id', 'name', 'pet_type', 'breed', 'age', 'color', 'owner']
+        fields = ['id', 'name', 'pet_type', 'breed', 'age', 'color', 'owner', 'profile_picture_url', 'description']
         read_only_fields = ['owner']
 
     def get_can_edit(self, instance):
@@ -33,20 +32,23 @@ class PetSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return instance.owner == request.user
 
-    # Ensure owner cannot be set via API if it's set automatically
-
     def get_owner(self, instance):
-        from UserManagement.serializers import CustomUserSerializer  # Import here
+        from UserManagement.serializers import CustomUserSerializer
         return CustomUserSerializer(instance.owner).data
 
     def to_representation(self, instance):
-        """
-        Transform the pet_type back to the original format for display purposes.
-        """
         ret = super().to_representation(instance)
         if 'pet_type' in ret:
-            ret['pet_type'] = instance.get_display_pet_type()  # Assuming you implement this method on the model
+            ret['pet_type'] = instance.get_display_pet_type()
         return ret
+
+    def get_profile_picture_url(self, obj):
+        if obj.profile.profile_picture:
+            return obj.profile.profile_picture.url
+        return None
+
+    def get_description(self, obj):
+        return obj.profile.description
 
 
 class PetTransferRequestSerializer(serializers.ModelSerializer):
@@ -79,12 +81,7 @@ class PetTransferRequestSerializer(serializers.ModelSerializer):
 
 
 class PetTransferRequestDetailSerializer(serializers.ModelSerializer):
-    from UserManagement.serializers import CustomUserSerializer
-
     pet = PetSerializer()
-    from_user = CustomUserSerializer()
-    to_user = CustomUserSerializer()
-    can_cancel = serializers.SerializerMethodField()
 
     class Meta:
         model = PetTransferRequest
@@ -93,3 +90,10 @@ class PetTransferRequestDetailSerializer(serializers.ModelSerializer):
     def get_can_cancel(self, instance):
         request = self.context.get('request')
         return instance.from_user == request.user
+
+    def to_representation(self, instance):
+        from UserManagement.serializers import CustomUserSerializer  # Import here to avoid circular dependency
+        representation = super().to_representation(instance)
+        representation['from_user'] = CustomUserSerializer(instance.from_user).data
+        representation['to_user'] = CustomUserSerializer(instance.to_user).data
+        return representation

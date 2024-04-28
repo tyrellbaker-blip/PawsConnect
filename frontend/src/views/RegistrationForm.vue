@@ -13,19 +13,19 @@
         <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
       </div>
       <div>
-        <label for="firstName">First Name</label>
-        <input id="firstName" v-model="form.firstName" type="text" placeholder="First Name" required>
-        <span v-if="errors.firstName" class="error-message">{{ errors.firstName }}</span>
+        <label for="first_name">First Name</label>
+        <input id="first_name" v-model="form.first_name" type="text" placeholder="First Name" required>
+        <span v-if="errors.first_name" class="error-message">{{ errors.first_name }}</span>
       </div>
       <div>
         <label for="lastName">Last Name</label>
-        <input id="lastName" v-model="form.lastName" type="text" placeholder="Last Name" required>
-        <span v-if="errors.lastName" class="error-message">{{ errors.lastName }}</span>
+        <input id="lastName" v-model="form.last_name" type="text" placeholder="Last Name" required>
+        <span v-if="errors.last_name" class="error-message">{{ errors.last_name }}</span>
       </div>
       <div>
-        <label for="displayName">Display Name</label>
-        <input id="displayName" v-model="form.displayName" type="text" placeholder="Display Name" required>
-        <span v-if="errors.displayName" class="error-message">{{ errors.displayName }}</span>
+        <label for="display_name">Display Name</label>
+        <input id="display_name" v-model="form.display_name" type="text" placeholder="Display Name" required>
+        <span v-if="errors.display_name" class="error-message">{{ errors.display_name }}</span>
       </div>
       <div>
         <label for="city">City</label>
@@ -38,15 +38,27 @@
         <span v-if="errors.state" class="error-message">{{ errors.state }}</span>
       </div>
       <div>
-        <label for="zip">ZIP Code</label>
-        <input id="zip" v-model="form.zip" type="text" placeholder="ZIP Code" required>
-        <span v-if="errors.zip" class="error-message">{{ errors.zip }}</span>
+        <label for="zip_code">ZIP Code</label>
+        <input id="zip_code" v-model="form.zip_code" type="text" placeholder="ZIP Code" required>
+        <span v-if="errors.zip_code" class="error-message">{{ errors.zip_code }}</span>
       </div>
       <div>
-        <label for="hasPets">Do you have pets?</label>
-        <input id="hasPets" v-model="form.hasPets" type="checkbox">
+        <label for="preferred_language">Preferred Language</label>
+        <select id="preferred_language" v-model="form.preferred_language" required>
+          <option value="">Select Language</option>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+        </select>
+        <span v-if="errors.preferred_language" class="error-message">{{ errors.preferred_language }}</span>
       </div>
-      <div v-if="form.hasPets">
+      <div>
+        <label for="has_pets">Do you have pets?</label>
+        <input id="has_pets" v-model="form.has_pets" type="checkbox">
+      </div>
+      <div v-if="form.has_pets">
         <h3>Pet Information</h3>
         <div v-for="(pet, index) in form.pets" :key="index">
           <label :for="'petName' + index">Pet Name</label>
@@ -68,6 +80,10 @@
           <input :id="'petColor' + index" v-model="pet.color" type="text" placeholder="Pet Color" required>
         </div>
         <button type="button" @click="addPet">Add Another Pet</button>
+      </div>
+      <div>
+        <label for="profile_picture">Profile Picture</label>
+        <input id="profile_picture" type="file" @change="onProfilePictureChange">
       </div>
       <div v-if="successMessage" class="success-message">
         {{ successMessage }}
@@ -91,14 +107,16 @@ export default {
       form: {
         email: '',
         password: '',
-        firstName: '',
-        lastName: '',
-        displayName: '',
+        first_name: '',
+        last_name: '',
+        display_name: '',
         city: '',
         state: '',
-        zip: '',
-        hasPets: false,
-        pets: [{ name: '', pet_type: '', age: null, breed: '', color: '' }]
+        zip_code: '',
+        has_pets: false,
+        preferred_language: '',
+        pets: [{name: '', pet_type: '', age: null, breed: '', color: ''}],
+        profile_picture: null,
       },
       errors: {},
       successMessage: '',
@@ -107,18 +125,45 @@ export default {
   },
   methods: {
     addPet() {
-      this.form.pets.push({ name: '', pet_type: '', age: null, breed: '', color: '' });
+      this.form.pets.push({name: '', pet_type: '', age: null, breed: '', color: ''});
+    },
+    onProfilePictureChange(event) {
+      this.form.profile_picture = event.target.files[0];
     },
     async registerUser() {
       this.errors = this.validateForm();
       if (Object.keys(this.errors).length === 0) {
         try {
-         const response = await axios.post('/register/', this.form);
+          const formData = new FormData();
+          formData.append('email', this.form.email);
+          formData.append('password', this.form.password);
+          formData.append('first_name', this.form.first_name);
+          formData.append('last_name', this.form.last_name);
+          formData.append('display_name', this.form.display_name);
+          formData.append('city', this.form.city);
+          formData.append('state', this.form.state);
+          formData.append('zip_code', this.form.zip_code);
+          formData.append('has_pets', this.form.has_pets);
+          formData.append('preferred_language', this.form.preferred_language);
+          if (this.form.profile_picture) {
+            formData.append('profile_picture', this.form.profile_picture);
+          }
+          this.form.pets.forEach((pet, index) => {
+            formData.append(`pets-${index}-name`, pet.name);
+            formData.append(`pets-${index}-pet_type`, pet.pet_type);
+            formData.append(`pets-${index}-age`, pet.age);
+            formData.append(`pets-${index}-breed`, pet.breed);
+            formData.append(`pets-${index}-color`, pet.color);
+          });
+
+          const response = await axios.post('http://127.0.0.1:8000/user/register/', formData);
           this.successMessage = "Registration successful!";
           console.log("Response", response.data);
           this.resetForm();
           localStorage.setItem('user-token', response.data.token);
-          await router.push(`/profile/${response.data.slug}`);
+
+          // Navigate to the user's profile page
+          await router.push(`/user/${response.data.id}`);
         } catch (error) {
           console.error('Registration failed. Please try again.', error);
           if (error.response && error.response.status === 401) {
@@ -133,9 +178,11 @@ export default {
     },
     resetForm() {
       this.form = {
-        email: '', password: '', firstName: '', lastName: '',
-        displayName: '', city: '', state: '', zip: '',
-        hasPets: false, pets: [{name: '', pet_type: '', age: null, breed: '', color: ''}]
+        email: '', password: '', first_name: '', last_name: '',
+        display_name: '', city: '', state: '', zip_code: '',
+        has_pets: false, pets: [{name: '', pet_type: '', age: null, breed: '', color: ''}],
+        preferred_language: '',
+        profile_picture: null,
       };
       this.errors = {};
     },
@@ -149,14 +196,14 @@ export default {
       if (!this.form.password) {
         errors.password = "Password is required.";
       }
-      if (!this.form.firstName) {
-        errors.firstName = "First Name is required.";
+      if (!this.form.first_name) {
+        errors.first_name = "First Name is required.";
       }
-      if (!this.form.lastName) {
+      if (!this.form.last_name) {
         errors.lastName = "Last Name is required.";
       }
-      if (!this.form.displayName) {
-        errors.displayName = "Display Name is required.";
+      if (!this.form.display_name) {
+        errors.display_name = "Display Name is required.";
       }
       if (!this.form.city) {
         errors.city = "City is required.";
@@ -164,12 +211,16 @@ export default {
       if (!this.form.state) {
         errors.state = "State is required.";
       }
-      if (!this.form.zip) {
-        errors.zip = "ZIP Code is required.";
+      if (!this.form.zip_code) {
+        errors.zip_code = "ZIP Code is required.";
+      }
+      if(!this.form.preferred_language)
+      {
+        errors.form.preferred_language = "Preferred Language is required.";
       }
 
       // Validate pet information if hasPets is true
-      if (this.form.hasPets) {
+      if (this.form.has_pets) {
         this.form.pets.forEach((pet, index) => {
           if (!pet.name) {
             errors[`petName${index}`] = "Pet name is required.";

@@ -1,49 +1,30 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from Content.serializers import PostSerializer
 from PetManagement.models import Pet
-from .models import CustomUser, Friendship, LANGUAGE_CHOICES, Photo
+from PetManagement.serializers import PetSerializer
+from .models import CustomUser, Friendship, Photo
 
 
-class CustomUserSimpleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = [
-            'username', 'display_name', 'profile_picture', 'location', 'pets',
-            'preferred_language', 'city', 'state', 'zip_code'
-        ]
-        can_edit_profile = serializers.SerializerMethodField()
-        is_friend = serializers.SerializerMethodField()
-
-    def get_can_edit_profile(self, instance):
-        request = self.context.get('request')
-        return instance == request.user
-
-    def get_is_friend(self, instance):
-        request = self.context.get('request')
-        return Friendship.objects.filter(
-            user_from=request.user, user_to=instance, status='accepted'
-        ).exists()
-
-
-class FriendshipSerializer(serializers.ModelSerializer):
-    user_from = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    user_to = serializers.SlugRelatedField(slug_field='username', queryset=get_user_model().objects.all())
-
-    class Meta:
-        model = Friendship
-        fields = ['user_from', 'user_to', 'created_at', 'status']
+class CustomLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    pets = PetSerializer(many=True, required=False)
+    profile_complete = serializers.SerializerMethodField()
+    posts = PostSerializer(many=True, read_only=True)
 
     class Meta:
         model = CustomUser
         fields = [
-            'username', 'email', 'password', 'first_name', 'last_name',
+            'id', 'username', 'email', 'password', 'first_name', 'last_name',
             'display_name', 'city', 'state', 'zip_code', 'has_pets', 'profile_incomplete',
-            'preferred_language', 'profile_picture', 'pets'
+            'preferred_language', 'profile_picture', 'pets', 'about_me', 'location',
+            'profile_complete', 'posts'
         ]
         read_only_fields = ['profile_incomplete']
         extra_kwargs = {
@@ -51,14 +32,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = CustomUser(**validated_data)
-        user.set_password(password)
-        user.save()
+        pets_data = validated_data.pop('pets', [])
+        user = CustomUser.objects.create_user(**validated_data)
+        for pet_data in pets_data:
+            Pet.objects.create(owner=user, **pet_data)
         return user
 
     def get_pets(self, instance):
-        from PetManagement.serializers import PetSerializer  # Import here to avoid circular dependency
+        from PetManagement.serializers import PetSerializer
         pets = instance.pets.all()
         return PetSerializer(pets, many=True).data
 
@@ -72,15 +53,19 @@ class CustomUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This email is already used by another account.")
         return value
 
-    def get_can_edit_profile(self, instance):
-        request = self.context.get('request')
-        return instance == request.user  # Only allow editing own profile
+    def get_profile_complete(self, instance):
+        required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
+                           'has_pets', 'about_me']
+        return not instance.profile_incomplete and all(getattr(instance, field) for field in required_fields)
 
-    def get_is_friend(self, instance):
-        request = self.context.get('request')
-        return Friendship.objects.filter(
-            user_from=request.user, user_to=instance, status='accepted'
-        ).exists()
+
+class FriendshipSerializer(serializers.ModelSerializer):
+    user_from = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    user_to = serializers.SlugRelatedField(slug_field='username', queryset=get_user_model().objects.all())
+
+    class Meta:
+        model = Friendship
+        fields = ['user_from', 'user_to', 'created_at', 'status']
 
 
 class PhotoSerializer(serializers.ModelSerializer):
