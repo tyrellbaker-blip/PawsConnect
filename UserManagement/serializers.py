@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from Content.serializers import PostSerializer
+
 from PetManagement.models import Pet
 from PetManagement.serializers import PetSerializer
 from .models import CustomUser, Friendship, Photo
@@ -13,10 +13,11 @@ class CustomLoginSerializer(serializers.Serializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+
     password = serializers.CharField(write_only=True)
     pets = PetSerializer(many=True, required=False)
     profile_complete = serializers.SerializerMethodField()
-    posts = PostSerializer(many=True, read_only=True)
+
 
     class Meta:
         model = CustomUser
@@ -32,8 +33,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        pets_data = validated_data.pop('pets', [])
+        from PetManagement.models import Pet
+        from .models import CustomUser
         user = CustomUser.objects.create_user(**validated_data)
+        pets_data = validated_data.pop('pets', [])
         for pet_data in pets_data:
             Pet.objects.create(owner=user, **pet_data)
         return user
