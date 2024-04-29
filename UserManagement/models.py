@@ -2,6 +2,7 @@ from autoslug import AutoSlugField
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -73,7 +74,7 @@ class CustomUser(AbstractUser):
     profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
     has_pets = models.BooleanField(default=False)
     profile_incomplete = models.BooleanField(default=True)
-    slug = AutoSlugField(populate_from='generate_username', unique=True, always_update=False)
+    slug = AutoSlugField(populate_from='generate_username',geography=True, unique=True, always_update=False)
     location = gis_models.PointField(_("location"), blank=True, null=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
@@ -89,6 +90,12 @@ class CustomUser(AbstractUser):
         last_name = self.last_name.lower()
         username = f"{first_name}_{last_name}"
         return username
+
+    @property
+    def get_location(self):
+        if self.location:
+            return GEOSGeometry(self.location, srid=self.location.srid)
+        return None
 
     @property
     def outgoing_friend_requests(self):

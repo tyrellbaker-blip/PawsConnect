@@ -40,11 +40,11 @@ class CustomUserSerializer(GeoFeatureModelSerializer):
         }
 
     def get_location(self, obj):
-        if obj.location:
-            # Return GeoJSON format for the location
+        location = obj.get_location
+        if location:
             return {
-                "type": "Point",
-                "coordinates": [obj.location.x, obj.location.y]
+                'type': 'Point',
+                'coordinates': [location.x, location.y]
             }
         return None
 
