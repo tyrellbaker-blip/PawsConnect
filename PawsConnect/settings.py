@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'rest_framework',
+    'rest_framework_gis',
     'rest_framework.authtoken',
     'corsheaders',
     'django_extensions'

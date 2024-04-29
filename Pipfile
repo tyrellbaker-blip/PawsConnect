@@ -12,6 +12,7 @@ django-autoslug = "*"
 djangorestframework = "*"
 geopy = "*"
 django-allauth = "*"
+requests = "*"
 
 [dev-packages]
 

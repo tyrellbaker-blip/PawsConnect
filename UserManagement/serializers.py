@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from PetManagement.serializers import PetSerializer
 from .models import CustomUser, Friendship, Photo
@@ -11,9 +12,10 @@ class CustomLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(GeoFeatureModelSerializer):
     password = serializers.CharField(write_only=True)
     pets = PetSerializer(many=True, required=False)
+    location = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -21,8 +23,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'id', 'email', 'password', 'first_name', 'last_name',
             'display_name', 'city', 'state', 'zip_code', 'has_pets', 'profile_incomplete',
             'preferred_language', 'profile_picture', 'pets', 'about_me',
-            'slug'
+            'slug', 'location'
         ]
+        geo_field = 'location'
         read_only_fields = ['slug', 'profile_incomplete']
         extra_kwargs = {
             'password': {'write_only': True},
@@ -35,6 +38,15 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'zip_code': {'required': True},
             'has_pets': {'required': True},
         }
+
+    def get_location(self, obj):
+        if obj.location:
+            # Return GeoJSON format for the location
+            return {
+                "type": "Point",
+                "coordinates": [obj.location.x, obj.location.y]
+            }
+        return None
 
     def create(self, validated_data):
         return create_user(self.Meta.model, validated_data)
