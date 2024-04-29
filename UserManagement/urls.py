@@ -8,7 +8,6 @@ from .views import (
     LogoutViewSet,
     ProfileViewSet,
     EditProfileViewSet,
-    EditPetProfileViewSet,
     UserCompletionViewSet,
     SearchViewSet,
     PhotoViewSet,
@@ -26,7 +25,6 @@ router.register('logout', LogoutViewSet, basename='logout')
 router.register('add-pet', AddPetViewSet, basename='add-pet')
 router.register('profile', ProfileViewSet, basename='profile')
 router.register('edit-profile', EditProfileViewSet, basename='edit-profile')
-router.register('edit-pet', EditPetProfileViewSet, basename='edit-pet')
 router.register('search', SearchViewSet, basename='search')
 router.register('photos', PhotoViewSet, basename='photo')
 router.register('friends', FriendsViewSet, basename='friend')

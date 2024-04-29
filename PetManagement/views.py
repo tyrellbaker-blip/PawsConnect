@@ -3,12 +3,10 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from django.contrib import messages
 
-from UserManagement.models import CustomUser
 from .models import Pet, PetTransferRequest
 from .permissions import IsOwnerPermission, IsOwnerOrRecipient
-from .serializers import PetSerializer, PetTransferRequestSerializer, PetTransferRequestDetailSerializer
+from .serializers import PetSerializer, PetTransferRequestSerializer
 
 
 class PetViewSet(viewsets.ModelViewSet):
@@ -16,8 +14,7 @@ class PetViewSet(viewsets.ModelViewSet):
     serializer_class = PetSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerPermission]
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+
 
     def destroy(self, request, *args, **kwargs):
         """ Custom implementation to delete a pet only if certain conditions are met. """
@@ -30,6 +27,11 @@ class PetViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Pet.objects.filter(owner=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class PetTransferRequestViewSet(viewsets.ModelViewSet):
@@ -44,7 +46,8 @@ class PetTransferRequestViewSet(viewsets.ModelViewSet):
     def accept(self, request, pk=None):
         transfer_request = self.get_object()
         if transfer_request.to_user != request.user:
-            return Response({'error': 'You are not authorized to accept this transfer request.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'You are not authorized to accept this transfer request.'},
+                            status=status.HTTP_403_FORBIDDEN)
         if transfer_request.status != PetTransferRequest.TransferStatus.PENDING:
             return Response({'error': 'Transfer request is not pending.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,7 +68,8 @@ class PetTransferRequestViewSet(viewsets.ModelViewSet):
     def reject(self, request, pk=None):
         transfer_request = self.get_object()
         if transfer_request.to_user != request.user:
-            return Response({'error': 'You are not authorized to reject this transfer request.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'You are not authorized to reject this transfer request.'},
+                            status=status.HTTP_403_FORBIDDEN)
         if transfer_request.status != PetTransferRequest.TransferStatus.PENDING:
             return Response({'error': 'Transfer request is not pending.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -74,3 +78,17 @@ class PetTransferRequestViewSet(viewsets.ModelViewSet):
             transfer_request.save()
 
         return Response({'message': 'Pet transfer rejected.'})
+
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from .models import Pet
+
+
+def pet_profile_picture(request, slug):
+    pet = get_object_or_404(Pet, slug=slug)
+    if pet.profile_picture:
+        return HttpResponse(pet.profile_picture, content_type='image/jpeg')
+    else:
+        # Return a default image or a 404 response
+        return HttpResponse('No profile picture found.', status=404)

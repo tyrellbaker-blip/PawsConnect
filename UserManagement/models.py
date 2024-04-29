@@ -1,4 +1,5 @@
 from autoslug import AutoSlugField
+from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
 from django.db import models
@@ -30,6 +31,34 @@ FRIENDSHIP_STATUS_CHOICES = [
 ]
 
 
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        """
+        Create and save a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The Email must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        """
+        Create and save a SuperUser with the given email and password.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
     display_name = models.CharField(_("display name"), max_length=100, db_index=True)
     preferred_language = models.CharField(_("preferred language"), max_length=5, choices=LANGUAGE_CHOICES, default='en')
@@ -44,7 +73,7 @@ class CustomUser(AbstractUser):
     profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
     has_pets = models.BooleanField(default=False)
     profile_incomplete = models.BooleanField(default=True)
-    slug = AutoSlugField(populate_from='username', unique=True)
+    slug = AutoSlugField(populate_from='generate_username', unique=True, always_update=False)
     location = gis_models.PointField(_("location"), blank=True, null=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
@@ -54,6 +83,12 @@ class CustomUser(AbstractUser):
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
     email = models.EmailField(unique=True, null=False)
     about_me = models.TextField(_("about me"), blank=True)
+
+    def generate_username(self):
+        first_name = self.first_name.lower()
+        last_name = self.last_name.lower()
+        username = f"{first_name}_{last_name}"
+        return username
 
     @property
     def outgoing_friend_requests(self):

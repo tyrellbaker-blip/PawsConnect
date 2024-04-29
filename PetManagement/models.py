@@ -27,6 +27,8 @@ class Pet(models.Model):
     color = models.CharField(max_length=50, blank=True)
     age = models.PositiveIntegerField(blank=True)
     pet_type = models.CharField(max_length=20, choices=PetType.choices, default=PetType.OTHER)
+    description = models.TextField(blank=True, max_length=500, default='Enter text here...')
+    profile_picture = models.ImageField(upload_to='pet_profile_pics/', null=True, blank=True)
     slug = AutoSlugField(populate_from='name', unique=True, always_update=True)
 
     def save(self, *args, **kwargs):
@@ -42,17 +44,6 @@ class Pet(models.Model):
     def get_display_pet_type(self):
         """Returns a nicely formatted pet type for display."""
         return self.pet_type.capitalize()
-
-
-class PetProfile(models.Model):
-    pet = models.OneToOneField(Pet, on_delete=models.CASCADE, related_name='profile')
-    description = models.TextField(blank=True, max_length=500, default='Enter text here...')
-    profile_picture = models.ImageField(upload_to='pet_profile_pics/', null=True, blank=True)
-
-    # Add any other fields specific to the pet profile
-
-    def __str__(self):
-        return f"{self.pet.name}'s Profile"
 
 
 def pet_photo_path(instance, filename):

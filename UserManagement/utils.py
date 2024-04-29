@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.db import transaction
@@ -8,17 +10,27 @@ from .models import CustomUser
 
 
 @transaction.atomic
-def create_user(cls, username, email, password, num_pets, pet_data):
-    user = cls.objects.create_user(username=username, email=email, password=password)
+def create_user(cls, email, password, pets, **extra_fields):
+    # Generate a username based on the first_name and last_name
+    username = (extra_fields.get('first_name', '') + '_' + extra_fields.get('last_name', '')).lower()
+    user = cls.objects.create_user(username=username, email=email, password=password, **extra_fields)
 
     # Create pets
-    for pet in pet_data:
-        Pet.objects.create(owner=user, **pet)
+    if pets:
+        pet_data = json.loads(pets)
+        for pet in pet_data:
+            Pet.objects.create(
+                owner=user,
+                name=pet.get('name', ''),
+                pet_type=pet.get('pet_type', ''),
+                age=pet.get('age', None),
+                description=pet.get('description', '')
+            )
 
     # Set profile completeness
     user.set_profile_incomplete()
 
-    return user, True
+    return user, user.slug
 
 
 def search_users(query=None, location_point=None, search_range=None):

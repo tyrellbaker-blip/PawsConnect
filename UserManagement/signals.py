@@ -11,7 +11,7 @@ from django.dispatch import receiver
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 from geopy.geocoders import GoogleV3
 
-from PetManagement.models import PetProfile, Pet
+from PetManagement.models import Pet
 from .models import CustomUser  # Ensure this matches your user model import
 
 # Setup logger
@@ -55,8 +55,3 @@ def mark_profile_incomplete(sender, **kwargs):
     CustomUser.objects.filter(pk=user.pk).update(profile_incomplete=True, slug=F('slug'))
 
 
-
-@receiver(post_save, sender=Pet)
-def create_pet_profile(sender, instance, created, **kwargs):
-    if created:
-        PetProfile.objects.create(pet=instance)

@@ -11,13 +11,22 @@ from rest_framework.response import Response
 
 from Content.models import Post
 from Content.serializers import PostSerializer
-from PetManagement.models import Pet, PetProfile
+from PetManagement.models import Pet
 from PetManagement.serializers import PetSerializer
 from UserManagement.models import CustomUser, Photo, Friendship
 from .serializers import CustomUserSerializer, FriendshipSerializer, PhotoSerializer, CustomLoginSerializer
-from .utils import search_users, search_pets
+from .utils import search_users, search_pets, create_user
 
 logger = logging.getLogger(__name__)
+
+
+def check_profile_completeness(user):
+    required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
+                       'has_pets', 'about_me']
+    for field in required_fields:
+        if getattr(user, field, None) is None:
+            return False
+    return True
 
 
 class RegistrationViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -26,43 +35,30 @@ class RegistrationViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        user = serializer.save()
-        user.profile_incomplete = True  # Set the profile_incomplete flag
-        user.save()
+        pets = self.request.data.get('pets')
+        user, slug = create_user(
+            CustomUser,
+            email=serializer.validated_data['email'],
+            password=serializer.validated_data['password'],
+            pets=pets,
+            **{k: v for k, v in serializer.validated_data.items() if k not in ['email', 'password']}
+        )
+        token, created = Token.objects.get_or_create(user=user)
+        self.request.data['token'] = token.key
+        self.request.data['slug'] = slug
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-    def perform_create(self, serializer):
-        user = serializer.save()
-        user.profile_incomplete = True  # Set profile_incomplete to True for new users
-        user.save()
-        self.send_welcome_email(user)
-
     def perform_update(self, serializer):
         user = serializer.save()
-        updated_data = serializer.validated_data
-        if user.profile_changed(updated_data):
-            user.profile_incomplete = False  # Set profile_incomplete to False if profile fields changed
-            user.save()
+        user.profile_incomplete = not check_profile_completeness(user)  # Use the global function
+        user.save()
 
     def get_queryset(self):
         return CustomUser.objects.filter(is_active=True)
-
-    def send_welcome_email(self, user):
-        # Implement your logic to send a welcome email to the user
-        pass
-
-    def check_profile_completeness(self, user):
-        """
-        Check if the user's profile is complete based on your requirements.
-        You can modify this method to include the necessary checks.
-        """
-        required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
-                           'has_pets', 'about_me']
-        return all(getattr(user, field) for field in required_fields)
 
 
 class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -103,8 +99,7 @@ class AddPetViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        pet = serializer.save(owner=self.request.user)
-        PetProfile.objects.create(pet=pet)
+        serializer.save(owner=self.request.user)
 
 
 class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -115,10 +110,9 @@ class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         user = self.get_object()
-        posts = Post.objects.filter(user=user)
-
         pets = user.pets.all()
         pet_serializer = PetSerializer(pets, many=True)
+        posts = Post.objects.filter(user=user)
 
         user_data = {
             'display_name': user.display_name,
@@ -156,25 +150,6 @@ class EditProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class EditPetProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    queryset = Pet.objects.all()
-    serializer_class = PetSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'slug'
-
-    def update(self, request, *args, **kwargs):
-        pet = self.get_object()
-        if pet.owner != request.user:
-            return Response({'error': 'You do not have permission to edit this pet profile'},
-                            status=status.HTTP_403_FORBIDDEN)
-        serializer = self.get_serializer(pet, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'Pet profile updated successfully'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -247,7 +222,7 @@ class FriendsViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.request.user.profile.friends.all()
+        return self.request.user.friends.all()
 
 
 class PetsViewSet(viewsets.ReadOnlyModelViewSet):
