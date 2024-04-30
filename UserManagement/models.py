@@ -61,6 +61,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
+    username = models.CharField(_("username"), max_length=20, unique=True, blank=True)
     display_name = models.CharField(_("display name"), max_length=100, db_index=True)
     preferred_language = models.CharField(_("preferred language"), max_length=5, choices=LANGUAGE_CHOICES, default='en')
     profile_picture = ProcessedImageField(
@@ -73,8 +74,7 @@ class CustomUser(AbstractUser):
     )
     profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
     has_pets = models.BooleanField(default=False)
-    profile_incomplete = models.BooleanField(default=True)
-    slug = AutoSlugField(populate_from='generate_username', unique=True, always_update=False)
+    slug = AutoSlugField(populate_from=username, unique=True, always_update=False)
     location = gis_models.PointField(_("location"), geography=True, blank=True, null=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
@@ -84,12 +84,6 @@ class CustomUser(AbstractUser):
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
     email = models.EmailField(unique=True, null=False)
     about_me = models.TextField(_("about me"), blank=True)
-
-    def generate_username(self):
-        first_name = self.first_name.lower()
-        last_name = self.last_name.lower()
-        username = f"{first_name}_{last_name}"
-        return username
 
     @property
     def get_location(self):
@@ -108,10 +102,7 @@ class CustomUser(AbstractUser):
     def get_absolute_url(self):
         return reverse('UserManagement:profile', kwargs={'slug': self.slug})
 
-    @property
-    def is_profile_complete(self):
-        required_fields = ['first_name', 'last_name', 'profile_picture', 'has_pets']
-        return all(getattr(self, field) for field in required_fields)
+
 
     def clean(self):
         super().clean()
@@ -125,14 +116,6 @@ class CustomUser(AbstractUser):
         profile_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
                           'has_pets', 'about_me']
         return any(getattr(self, field) != updated_data.get(field, getattr(self, field)) for field in profile_fields)
-
-    def set_profile_incomplete(self):
-        required_fields = ['first_name', 'last_name', 'city', 'state', 'zip_code', 'has_pets']
-        if all(getattr(self, field) for field in required_fields):
-            self.profile_incomplete = False
-        else:
-            self.profile_incomplete = True
-        self.save()
 
 
 class Photo(models.Model):

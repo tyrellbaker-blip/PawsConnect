@@ -1,25 +1,33 @@
 import logging
-
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, mixins, serializers
-from rest_framework.authtoken.models import Token
+from django.urls import reverse
+from rest_framework import viewsets, status, mixins, serializers, filters
 from rest_framework.decorators import action
+from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-
 from Content.models import Post
 from Content.serializers import PostSerializer
 from PetManagement.models import Pet
 from PetManagement.serializers import PetSerializer
 from UserManagement.models import CustomUser, Photo, Friendship
 from .serializers import CustomUserSerializer, FriendshipSerializer, PhotoSerializer, CustomLoginSerializer
-from .utils import search_users, search_pets, create_user
+from .utils import search_users, search_pets
 
 logger = logging.getLogger(__name__)
 
 
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 def check_profile_completeness(user):
     required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
                        'has_pets', 'about_me']
@@ -29,36 +37,72 @@ def check_profile_completeness(user):
     return True
 
 
-class RegistrationViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-    permission_classes = [AllowAny]
+User = get_user_model()
 
-    def perform_create(self, serializer):
-        pets = self.request.data.get('pets')
-        user, slug = create_user(
-            CustomUser,
-            email=serializer.validated_data['email'],
-            password=serializer.validated_data['password'],
-            pets=pets,
-            **{k: v for k, v in serializer.validated_data.items() if k not in ['email', 'password']}
-        )
-        token, created = Token.objects.get_or_create(user=user)
-        self.request.data['token'] = token.key
-        self.request.data['slug'] = slug
+
+# views.py
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+class RegistrationAPIView(CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = CustomUserSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Creating the user and handling the response
+        response = super().create(request, *args, **kwargs)
+        if response.status_code == 201:  # Check if user was successfully created
+            user = response.data  # We can use response data directly, no need to query DB again
+            refresh = RefreshToken.for_user(user)
+
+            # Preparing JWT tokens and the redirect URL
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            redirect_url = request.build_absolute_uri(reverse('user-profile', kwargs={'slug': user['slug']}))
+
+            # Updating the response data with tokens and redirect URL
+            response.data.update({
+                'access': access_token,
+                'refresh': refresh_token,
+                'redirect_url': redirect_url
+            })
+
+        return response
+
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()  # Include all users by default
     serializer_class = CustomUserSerializer
-
-    def perform_update(self, serializer):
-        user = serializer.save()
-        user.profile_incomplete = not check_profile_completeness(user)  # Use the global function
-        user.save()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username']
 
     def get_queryset(self):
-        return CustomUser.objects.filter(is_active=True)
+        """
+        Filter on 'is_active' only if explicitly requested, otherwise include all.
+        """
+        queryset = super().get_queryset()
+
+        # Check for is_active filter in the query params
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            is_active = is_active.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_active=is_active)
+
+        # Geospatial filtering based on location and range
+        longitude = self.request.query_params.get('longitude')
+        latitude = self.request.query_params.get('latitude')
+        range = self.request.query_params.get('range')  # range in kilometers
+
+        if longitude and latitude and range:
+            # Ensure the coordinates and range are appropriately converted to float
+            user_location = Point(float(longitude), float(latitude), srid=4326)
+            queryset = queryset.annotate(
+                distance=Distance('location', user_location)
+            ).filter(distance__lte=D(km=float(range)))
+
+        return queryset
 
 
 class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -72,17 +116,18 @@ class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             password = serializer.validated_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user:
-                logger.info(f"User authenticated successfully: {user.username}")
-                token, created = Token.objects.get_or_create(user=user)
-                redirect_url = 'user_completion' if user.profile_incomplete else f'profile/{user.slug}'
-                response_data = {
-                    'redirect_url': redirect_url,
-                    'token': token.key
-                }
-                return Response(response_data, status=status.HTTP_200_OK)
+                tokens = get_tokens_for_user(user)
+                tokens.update({
+                    'user_id': user.pk,
+                    'username': user.username,
+                    'slug': user.slug
+                })
+                return Response(tokens, status=status.HTTP_200_OK)
             else:
                 return Response({'error': "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class LogoutViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -115,6 +160,7 @@ class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         posts = Post.objects.filter(user=user)
 
         user_data = {
+            'username': user.username,
             'display_name': user.display_name,
             'first_name': user.first_name,
             'last_name': user.last_name,
@@ -165,7 +211,6 @@ class UserCompletionViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            instance.set_profile_incomplete()
             return Response({'message': 'User profile completed successfully'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

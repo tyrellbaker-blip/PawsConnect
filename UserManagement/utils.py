@@ -48,9 +48,6 @@ def create_user(cls, email, password, pets, **extra_fields):
                 description=pet.get('description', '')
             )
 
-    # Set profile completeness
-    user.set_profile_incomplete()
-
     return user, user.slug
 
 

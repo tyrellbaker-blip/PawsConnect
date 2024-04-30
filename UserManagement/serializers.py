@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from PetManagement.serializers import PetSerializer
 from .models import CustomUser, Friendship, Photo
@@ -12,21 +11,18 @@ class CustomLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class CustomUserSerializer(GeoFeatureModelSerializer):
+class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     pets = PetSerializer(many=True, required=False)
-    location = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = get_user_model()  # Ensures we're using the current user model
         fields = [
             'id', 'email', 'password', 'first_name', 'last_name',
-            'display_name', 'city', 'state', 'zip_code', 'has_pets', 'profile_incomplete',
-            'preferred_language', 'profile_picture', 'pets', 'about_me',
-            'slug', 'location'
+            'display_name', 'city', 'state', 'zip_code', 'has_pets',
+            'preferred_language', 'profile_picture', 'pets', 'about_me', 'slug'
         ]
-        geo_field = 'location'
-        read_only_fields = ['slug', 'profile_incomplete']
+        read_only_fields = ['slug']
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'required': True},
@@ -36,20 +32,19 @@ class CustomUserSerializer(GeoFeatureModelSerializer):
             'city': {'required': True},
             'state': {'required': True},
             'zip_code': {'required': True},
-            'has_pets': {'required': True},
+            'has_pets': {'required': True}
         }
-
-    def get_location(self, obj):
-        location = obj.get_location
-        if location:
-            return {
-                'type': 'Point',
-                'coordinates': [location.x, location.y]
-            }
-        return None
 
     def create(self, validated_data):
         return create_user(self.Meta.model, validated_data)
+
+    def update(self, instance, validated_data):
+        # Handle the update logic, ensuring sensitive fields like password are handled correctly
+        instance = super().update(instance, validated_data)
+        if 'password' in validated_data:
+            instance.set_password(validated_data['password'])
+            instance.save()
+        return instance
 
     def get_pets(self, instance):
         from PetManagement.serializers import PetSerializer
@@ -60,11 +55,6 @@ class CustomUserSerializer(GeoFeatureModelSerializer):
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError("This email is already used by another account.")
         return value
-
-    def get_profile_complete(self, instance):
-        required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
-                           'has_pets', 'about_me']
-        return not instance.profile_incomplete and all(getattr(instance, field) for field in required_fields)
 
 
 class FriendshipSerializer(serializers.ModelSerializer):

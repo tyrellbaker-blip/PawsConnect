@@ -82,8 +82,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     'allauth.account.middleware.AccountMiddleware',
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'UserManagement.middleware.ProfileCompletionMiddleware',  # Moved after session and authentication
+    "django.middleware.clickjacking.XFrameOptionsMiddleware", # Moved after session and authentication
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
@@ -93,7 +92,7 @@ ROOT_URLCONF = "PawsConnect.urls"
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
