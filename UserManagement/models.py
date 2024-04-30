@@ -1,11 +1,10 @@
 from autoslug import AutoSlugField
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.measure import D
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import Q
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -33,7 +32,36 @@ FRIENDSHIP_STATUS_CHOICES = [
 ]
 
 
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        """
+        Create and save a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The Email must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        """
+        Create and save a SuperUser with the given email and password.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
+    username = models.CharField(_("username"), max_length=20, unique=True, blank=True)
     display_name = models.CharField(_("display name"), max_length=100, db_index=True)
     preferred_language = models.CharField(_("preferred language"), max_length=5, choices=LANGUAGE_CHOICES, default='en')
     profile_picture = ProcessedImageField(
@@ -46,9 +74,8 @@ class CustomUser(AbstractUser):
     )
     profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
     has_pets = models.BooleanField(default=False)
-    profile_incomplete = models.BooleanField(default=True)
-    slug = AutoSlugField(populate_from='username', unique=True)
-    location = gis_models.PointField(_("location"), blank=True, null=True)
+    slug = AutoSlugField(populate_from=username, unique=True, always_update=False)
+    location = gis_models.PointField(_("location"), geography=True, blank=True, null=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
     zip_code = models.CharField(_("zip code"), max_length=12, blank=True)
@@ -56,6 +83,13 @@ class CustomUser(AbstractUser):
     pets = models.ManyToManyField('PetManagement.Pet', related_name='owners', blank=True)
     friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
     email = models.EmailField(unique=True, null=False)
+    about_me = models.TextField(_("about me"), blank=True)
+
+    @property
+    def get_location(self):
+        if self.location:
+            return GEOSGeometry(self.location, srid=self.location.srid)
+        return None
 
     @property
     def outgoing_friend_requests(self):
@@ -68,32 +102,20 @@ class CustomUser(AbstractUser):
     def get_absolute_url(self):
         return reverse('UserManagement:profile', kwargs={'slug': self.slug})
 
-    @property
-    def is_profile_complete(self):
-        required_fields = ['first_name', 'last_name', 'profile_picture', 'has_pets']
-        return all(getattr(self, field) for field in required_fields)
+
 
     def clean(self):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
 
-    def set_profile_incomplete(self):
-        required_fields = ['first_name', 'last_name', 'city', 'state', 'zip_code', 'has_pets']
-        if all(getattr(self, field) for field in required_fields):
-            self.profile_incomplete = False
-        else:
-            self.profile_incomplete = True
-        self.save()
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
-    location = models.CharField(max_length=100, blank=True)
-    friends = models.ManyToManyField('self', symmetrical=False, related_name='user_friends', blank=True)
-    about_me = models.TextField(_("about me"), blank=True, max_length=500, null=True)
-
-    def __str__(self):
-        return f"{self.user.username}'s Profile"
+    def profile_changed(self, updated_data):
+        """
+        Checks if any of the profile fields have changed.
+        Returns True if any of the profile fields have changed, False otherwise.
+        """
+        profile_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
+                          'has_pets', 'about_me']
+        return any(getattr(self, field) != updated_data.get(field, getattr(self, field)) for field in profile_fields)
 
 
 class Photo(models.Model):
@@ -127,6 +149,7 @@ class Friendship(models.Model):
     def reject(self):
         self.status = 'rejected'
         self.save()
+
 
 @receiver(post_save, sender=Friendship)
 def update_friends_count(sender, instance, created, **kwargs):

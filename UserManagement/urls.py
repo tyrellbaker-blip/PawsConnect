@@ -1,33 +1,41 @@
-# UserManagement/urls.py
 from django.urls import path, include
-from django.contrib.auth.views import LogoutView
-
-from UserManagement.views import FriendshipViewSet
-from . import views
-from .views import CustomLogoutView
-from .views import add_pet, delete_pet
 from rest_framework.routers import DefaultRouter
-from .views import CustomUserViewSet
+from .views import (
+    RegistrationViewSet,
+    CustomUserViewSet,
+    LoginViewSet,
+    AddPetViewSet,
+    LogoutViewSet,
+    ProfileViewSet,
+    EditProfileViewSet,
+    UserCompletionViewSet,
+    SearchViewSet,
+    PhotoViewSet,
+    FriendsViewSet,
+    PetsViewSet,
+    FriendshipViewSet,
+    DeletePetViewSet,
+    ProfileFeedViewSet,
+)
 
 router = DefaultRouter()
-router.register('users', CustomUserViewSet)
-router.register(r'friendships', FriendshipViewSet, basename='friendship')
-app_name = 'UserManagement'
+router.register('users', CustomUserViewSet, basename='user')
+router.register('register', RegistrationViewSet, basename='register')
+router.register('logout', LogoutViewSet, basename='logout')
+router.register('add-pet', AddPetViewSet, basename='add-pet')
+router.register('profile', ProfileViewSet, basename='profile')
+router.register('edit-profile', EditProfileViewSet, basename='edit-profile')
+router.register('search', SearchViewSet, basename='search')
+router.register('photos', PhotoViewSet, basename='photo')
+router.register('friends', FriendsViewSet, basename='friend')
+router.register('pets', PetsViewSet, basename='pet')
+router.register('friendships', FriendshipViewSet, basename='friendship')
+router.register('delete-pet', DeletePetViewSet, basename='delete-pet')
+router.register('feed', ProfileFeedViewSet, basename='feed')
 
+app_name = 'UserManagement'
 urlpatterns = [
     path('', include(router.urls)),
-    path('home/', views.home, name='home'),
-    path('login/', views.user_login, name='login'),
-    path('logout/', CustomLogoutView.as_view(next_page='UserManagement:login'), name='logout'),
-    path('register/', views.register, name='register'),
-    path('profile/<slug:slug>/', views.profile, name='profile'),
-    path('edit_profile/', views.edit_profile, name='edit_profile'),
-    path('friends/', views.friends, name='friends'),
-    path('photos/', views.photos, name='photos'),
-    path('pets/', views.pets, name='pets'),
-    path('search/', views.search, name='search'),
-    path('complete/', views.user_completion, name='user_completion'),
-    path('add_pet/', add_pet, name='add_pet'),
-    path('delete_pet/', delete_pet, name='delete_pet'),
-    path('edit_pet/<slug:pet_slug>/', views.edit_pet_profile, name='edit_pet_profile'),
+    path('login/', LoginViewSet.as_view({'post': 'create'}), name='login'),
+    path('user-completion/<slug:slug>/', UserCompletionViewSet.as_view({'put': 'update'}), name='user-completion'),
 ]

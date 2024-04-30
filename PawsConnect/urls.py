@@ -19,13 +19,15 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
-                  path('admin/', admin.site.urls),
-                  path('user/', include('UserManagement.urls', namespace='UserManagement')),
-                  path('pet/', include('PetManagement.urls', namespace='PetManagement')),
-                  path('content/', include('Content.urls', namespace='content')),
-                  path('', lambda request: redirect('UserManagement:login')),
-                  path('accounts/', include('allauth.urls')),
-                  # Redirect the root URL
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('admin/', admin.site.urls),
+    path('user/', include('UserManagement.urls', namespace='UserManagement')),
+    path('pet/', include('PetManagement.urls', namespace='PetManagement')),
+    path('content/', include('Content.urls', namespace='content')),
+    path('', lambda request: redirect('UserManagement:login')),
+    path('accounts/', include('allauth.urls')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

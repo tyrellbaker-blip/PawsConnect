@@ -1,13 +1,20 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import auth from './modules/auth'
+import { createStore } from 'vuex';
+import auth from './modules/auth'; // Ensure this path correctly points to your auth module
 
-Vue.use(Vuex)
+const store = createStore({
+    modules: {
+        auth, // Include the auth module in your store
+    },
+    state() {
+        return {
+            count: 0 // General state outside of modules
+        };
+    },
+    mutations: {
+        increment(state) {
+            state.count++; // Mutation to increment the count
+        }
+    }
+});
 
-const store = new Vuex.Store({
-  modules: {
-    auth
-  }
-})
-
-export default store
+export default store;

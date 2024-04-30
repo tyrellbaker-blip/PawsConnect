@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import store from '../store'; // Make sure the path to the store is correct
 
 // Import views and components
 import Home from '../views/HomeView.vue';
@@ -10,7 +11,6 @@ import TransferPet from '../views/TransferPet.vue';
 import SearchPage from '../views/SearchPage.vue';
 import FriendList from '../views/FriendManagement.vue';
 import EditProfile from '../views/EditProfile.vue';
-import EditPetProfile from '../components/editpetprofile.vue';
 
 const routes = [
   {
@@ -24,7 +24,7 @@ const routes = [
     component: UserLogin
   },
   {
-    path: '/register',
+    path: '/register/',
     name: 'Register',
     component: RegistrationForm
   },
@@ -34,7 +34,6 @@ const routes = [
     component: UserProfile,
     meta: { requiresAuth: true }
   },
-
   {
     path: '/create-post',
     name: 'PostCreation',
@@ -65,12 +64,7 @@ const routes = [
     component: EditProfile,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/edit-pet-profile/:petId',
-    name: 'EditPetProfile',
-    component: EditPetProfile,
-    meta: { requiresAuth: true }
-  }
+
 ];
 
 const router = createRouter({
@@ -81,20 +75,17 @@ const router = createRouter({
 // Navigation guard to check for protected routes
 router.beforeEach((to, from, next) => {
   // Check if the route requires authentication
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    // Here you would check if the user is authenticated
-    // You can modify this check according to how you handle authentication
-    if (!localStorage.getItem('user-token')) {
-      // Assuming you store token in localStorage
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath } // Store the full path to redirect the user back after successful login
-      });
-    } else {
-      next();
-    }
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isAuthenticated = store.getters['auth/isAuthenticated']; // Use Vuex to check if the user is authenticated
+
+  if (requiresAuth && !isAuthenticated) {
+    // Redirect to login page if not authenticated
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath } // Store the full path to redirect the user back after successful login
+    });
   } else {
-    next(); // Always call next()!
+    next(); // Proceed to route
   }
 });
 
