@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
 from .views import (
     RegistrationAPIView,
     CustomUserViewSet,
@@ -46,7 +47,7 @@ urlpatterns = [
 
     # Direct path registration for the registration view
     path('register/', RegistrationAPIView.as_view(), name='register'),
-path('profile/<slug:slug>/', ProfileViewSet.as_view({'get': 'retrieve'}), name='profile'),
+    path('profile/<slug:slug>/', ProfileViewSet.as_view({'get': 'retrieve'}), name='profile'),
     # Direct path registration for the member home page view
     path('api/member-home-page/', MemberHomePageView.as_view(), name='member_home_page'),
 ]
