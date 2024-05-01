@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from decouple import config
 
@@ -55,7 +56,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'rest_framework',
     'rest_framework_gis',
-    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'corsheaders',
     'django_extensions'
 
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
+
 ]
 SOCIALACCOUNT_ADAPTER = 'UserManagement.adapter.CustomAccountAdapter'
 SITE_ID = 1
@@ -71,7 +73,6 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
-GDAL_LIBRARY_PATH = '/opt/homebrew/Cellar/gdal/3.8.5_2/lib/libgdal.dylib'
 GEOS_LIBRARY_PATH = '/opt/homebrew/lib/libgeos_c.dylib'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -82,8 +83,9 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     'allauth.account.middleware.AccountMiddleware',
-    "django.middleware.clickjacking.XFrameOptionsMiddleware", # Moved after session and authentication
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8080',
@@ -190,14 +192,19 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
-        'UserManagement.middleware': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        '': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
     },
 }
-

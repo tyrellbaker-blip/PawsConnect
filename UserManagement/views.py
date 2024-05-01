@@ -1,25 +1,28 @@
 import logging
+
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from rest_framework import viewsets, status, mixins, serializers, filters
+from rest_framework import viewsets, status, mixins, serializers, filters, generics
 from rest_framework.decorators import action
-from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from Content.models import Post
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from Content.serializers import PostSerializer
 from PetManagement.models import Pet
 from PetManagement.serializers import PetSerializer
 from UserManagement.models import CustomUser, Photo, Friendship
-from .serializers import CustomUserSerializer, FriendshipSerializer, PhotoSerializer, CustomLoginSerializer
+from .serializers import CustomUserSerializer, FriendshipSerializer, PhotoSerializer
 from .utils import search_users, search_pets
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 def get_tokens_for_user(user):
@@ -28,47 +31,52 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
-def check_profile_completeness(user):
-    required_fields = ['first_name', 'last_name', 'profile_picture', 'location', 'city', 'state', 'zip_code',
-                       'has_pets', 'about_me']
-    for field in required_fields:
-        if getattr(user, field, None) is None:
-            return False
-    return True
+
+    # views.py
 
 
-User = get_user_model()
-
-
-# views.py
-from rest_framework_simplejwt.tokens import RefreshToken
-
-
-class RegistrationAPIView(CreateAPIView):
+class RegistrationAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
 
     def create(self, request, *args, **kwargs):
-        # Creating the user and handling the response
-        response = super().create(request, *args, **kwargs)
-        if response.status_code == 201:  # Check if user was successfully created
-            user = response.data  # We can use response data directly, no need to query DB again
-            refresh = RefreshToken.for_user(user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
 
-            # Preparing JWT tokens and the redirect URL
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-            redirect_url = request.build_absolute_uri(reverse('user-profile', kwargs={'slug': user['slug']}))
+        tokens = get_tokens_for_user(user)  # Get tokens using the helper function
+        redirect_url = reverse('UserManagement:profile-detail', kwargs={'slug': user.slug})
 
-            # Updating the response data with tokens and redirect URL
-            response.data.update({
-                'access': access_token,
-                'refresh': refresh_token,
-                'redirect_url': redirect_url
-            })
+        response_data = {
+            'user': CustomUserSerializer(user).data,
+            'tokens': tokens,
+            'redirect_url': redirect_url,
+        }
 
-        return response
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
+
+class LoginViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        logger.info("Starting authentication process for username: %s", request.data.get('username'))
+        user = authenticate(request, username=request.data.get('username'), password=request.data.get('password'))
+        if user:
+            tokens = get_tokens_for_user(user)
+            redirect_url = reverse('UserManagement:profile', kwargs={'slug': user.slug})
+            response_data = {
+                'user_id': user.pk,
+                'username': user.username,
+                'slug': user.slug,
+                'redirect_url': redirect_url,
+                'tokens': tokens
+            }
+            logger.info("Authentication successful for user %s, sending login response.", user.username)
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            logger.warning("Authentication failed for user %s.", request.data.get('username'))
+            return Response({'error': "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -105,37 +113,11 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class LoginViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    serializer_class = CustomLoginSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data.get('username')
-            password = serializer.validated_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user:
-                tokens = get_tokens_for_user(user)
-                tokens.update({
-                    'user_id': user.pk,
-                    'username': user.username,
-                    'slug': user.slug
-                })
-                return Response(tokens, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 class LogoutViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         logger.info(f"Logging out user: {request.user}")
-        request.user.auth_token.delete()
         return Response({'message': 'User logged out successfully'}, status=status.HTTP_200_OK)
 
 
@@ -164,7 +146,6 @@ class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             'display_name': user.display_name,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            'location': user.location,
             'about_me': user.about_me,
             'city': user.city,
             'state': user.state,
@@ -200,20 +181,7 @@ class EditProfileViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserCompletionViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'slug'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'User profile completed successfully'}, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+from Content.models import Post
 
 
 class SearchViewSet(viewsets.ViewSet):
@@ -357,3 +325,9 @@ class ProfileFeedViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         feed |= Post.objects.filter(user=user)
         feed |= Post.objects.filter(visibility=Post.VisibilityChoices.PUBLIC)
         return feed.distinct().order_by('-timestamp')
+
+
+class MemberHomePageView(generics.ListAPIView):
+    queryset = Post.objects.all().order_by('-timestamp')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]

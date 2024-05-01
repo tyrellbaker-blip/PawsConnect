@@ -73,8 +73,8 @@ class CustomUser(AbstractUser):
         null=True
     )
     profile_visibility = models.CharField(max_length=10, choices=PROFILE_VISIBILITY_CHOICES, default='public')
-    has_pets = models.BooleanField(default=False)
-    slug = AutoSlugField(populate_from=username, unique=True, always_update=False)
+    has_pets = models.BooleanField(_("has pets"), default=False)
+    slug = AutoSlugField(_("slug"), populate_from='username', unique=True, always_update=False)
     location = gis_models.PointField(_("location"), geography=True, blank=True, null=True)
     city = models.CharField(_("city"), max_length=100, blank=True)
     state = models.CharField(_("state"), max_length=100, blank=True)
@@ -101,8 +101,6 @@ class CustomUser(AbstractUser):
 
     def get_absolute_url(self):
         return reverse('UserManagement:profile', kwargs={'slug': self.slug})
-
-
 
     def clean(self):
         super().clean()
