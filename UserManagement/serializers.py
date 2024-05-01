@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from PetManagement.models import Pet
 from PetManagement.serializers import PetSerializer
-from .models import CustomUser, Friendship, Photo
-from .utils import create_user
+from .models import Friendship, Photo
 
 
 class CustomLoginSerializer(serializers.Serializer):
@@ -11,24 +11,30 @@ class CustomLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
+from rest_framework import serializers
+from .models import CustomUser
+from .geocoding import geocode_address
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     pets = PetSerializer(many=True, required=False)
 
     class Meta:
-        model = get_user_model()  # Ensures we're using the current user model
+        model = CustomUser
         fields = [
-            'id', 'email', 'password', 'first_name', 'last_name',
+            'id', 'username', 'email', 'password', 'first_name', 'last_name',
             'display_name', 'city', 'state', 'zip_code', 'has_pets',
             'preferred_language', 'profile_picture', 'pets', 'about_me', 'slug'
         ]
         read_only_fields = ['slug']
         extra_kwargs = {
             'password': {'write_only': True},
+            'username': {'required': True},
             'email': {'required': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
-            'display_name': {'required': True},
+            'display_name': {'required': False},
             'city': {'required': True},
             'state': {'required': True},
             'zip_code': {'required': True},
@@ -36,25 +42,34 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        return create_user(self.Meta.model, validated_data)
+        pets_data = validated_data.pop('pets', [])
+        password = validated_data.pop('password')
+        display_name = validated_data.pop('display_name', None)
 
-    def update(self, instance, validated_data):
-        # Handle the update logic, ensuring sensitive fields like password are handled correctly
-        instance = super().update(instance, validated_data)
-        if 'password' in validated_data:
-            instance.set_password(validated_data['password'])
-            instance.save()
-        return instance
+        # Set display_name to username if not provided
+        if not display_name:
+            validated_data['display_name'] = validated_data['username']
 
-    def get_pets(self, instance):
-        from PetManagement.serializers import PetSerializer
-        pets = instance.pets.all()
-        return PetSerializer(pets, many=True).data
+        # Geocode the address
+        city = validated_data.get('city')
+        state = validated_data.get('state')
+        zip_code = validated_data.get('zip_code')
+        if city and state and zip_code:
+            location = geocode_address(city, state, zip_code)
+            validated_data['location'] = location
 
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already used by another account.")
-        return value
+        # Create user instance
+        user = CustomUser.objects.create(
+            **validated_data
+        )
+        user.set_password(password)
+        user.save()
+
+        # Create associated pets
+        for pet_data in pets_data:
+            Pet.objects.create(owner=user, **pet_data)
+
+        return user
 
 
 class FriendshipSerializer(serializers.ModelSerializer):
