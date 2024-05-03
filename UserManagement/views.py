@@ -7,11 +7,11 @@ from django.contrib.gis.measure import D
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import viewsets, status, mixins, serializers, filters, generics
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from Content.serializers import PostSerializer
 from PetManagement.models import Pet
@@ -25,12 +25,6 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
 
     # views.py
 
@@ -44,12 +38,12 @@ class RegistrationAPIView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        tokens = get_tokens_for_user(user)  # Get tokens using the helper function
+        token, created = Token.objects.get_or_create(user=user)  # Get tokens using the helper function
         redirect_url = reverse('UserManagement:profile-detail', kwargs={'slug': user.slug})
 
         response_data = {
             'user': CustomUserSerializer(user).data,
-            'tokens': tokens,
+            'tokens': token.key,
             'redirect_url': redirect_url,
         }
 
@@ -60,19 +54,17 @@ class LoginViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
-        logger.info("Starting authentication process for username: %s", request.data.get('username'))
         user = authenticate(request, username=request.data.get('username'), password=request.data.get('password'))
         if user:
-            tokens = get_tokens_for_user(user)
+            token, created = Token.objects.get_or_create(user=user)
             redirect_url = reverse('UserManagement:profile', kwargs={'slug': user.slug})
             response_data = {
                 'user_id': user.pk,
                 'username': user.username,
                 'slug': user.slug,
                 'redirect_url': redirect_url,
-                'tokens': tokens
+                'token': token.key
             }
-            logger.info("Authentication successful for user %s, sending login response.", user.username)
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             logger.warning("Authentication failed for user %s.", request.data.get('username'))
@@ -139,9 +131,10 @@ class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         user = self.get_object()
         pets = user.pets.all()
         pet_serializer = PetSerializer(pets, many=True)
-        posts = Post.objects.filter(user=user)
+        posts = user.posts.all().order_by('-timestamp')
 
         user_data = {
+            'slug': user.slug,
             'username': user.username,
             'display_name': user.display_name,
             'first_name': user.first_name,
@@ -155,7 +148,7 @@ class ProfileViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             'profile_picture': user.profile_picture.url if user.profile_picture else None,
         }
 
-        post_serializer = PostSerializer(posts, many=True)
+        post_serializer = PostSerializer(posts, many=True, context={'request': request})
 
         context = {
             'user': user_data,
@@ -331,3 +324,7 @@ class MemberHomePageView(generics.ListAPIView):
     queryset = Post.objects.all().order_by('-timestamp')
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+
+
+

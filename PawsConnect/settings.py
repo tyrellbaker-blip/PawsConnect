@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'rest_framework',
     'rest_framework_gis',
-    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'corsheaders',
     'django_extensions'
 
@@ -73,7 +73,9 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
-GEOS_LIBRARY_PATH = '/opt/homebrew/lib/libgeos_c.dylib'
+GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH')
+GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH')
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # Ensure session is available
@@ -90,11 +92,12 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8080',
 ]
+
 ROOT_URLCONF = "PawsConnect.urls"
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 
@@ -187,24 +190,4 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_REDIRECT_URL = 'UserManagement:profile'
 LOGOUT_REDIRECT_URL = 'UserManagement:login'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'UserManagement:user_completion'
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        '': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-    },
-}
+

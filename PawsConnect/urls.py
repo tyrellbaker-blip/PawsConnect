@@ -26,7 +26,6 @@ urlpatterns = [
     path('user/', include('UserManagement.urls', namespace='UserManagement')),
     path('pet/', include('PetManagement.urls', namespace='PetManagement')),
     path('content/', include('Content.urls', namespace='content')),
-    path('', lambda request: redirect('UserManagement:login')),
     path('accounts/', include('allauth.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
