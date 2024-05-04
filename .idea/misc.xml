@@ -3,5 +3,8 @@
   <component name="Black">
     <option name="sdkName" value="Pipenv (PawsConnect)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Pipenv (PawsConnect)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Pipenv (PawsConnect) (3)" project-jdk-type="Python SDK" />
+  <component name="PyPackaging">
+    <option name="earlyReleasesAsUpgrades" value="true" />
+  </component>
 </project>

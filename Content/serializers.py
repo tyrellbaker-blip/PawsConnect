@@ -16,33 +16,25 @@ class PostSerializer(serializers.ModelSerializer):
     visibility = serializers.ChoiceField(choices=Post.VisibilityChoices.choices)
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
+    photo = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'user', 'content', 'photo', 'visibility', 'tagged_pets', 'timestamp', 'updated_at', 'is_active']
+        fields = ['id', 'user', 'content', 'photo', 'visibility', 'tagged_pets', 'timestamp', 'updated_at', 'is_active',
+                  'can_edit', 'can_delete']
+        read_only_fields = ['user', 'timestamp', 'updated_at']
 
-    def get_can_edit(self, instance):
+    def get_can_edit(self, obj):
         request = self.context.get('request')
-        return instance.user == request.user
+        if obj is None:
+            return False
+        return obj.user == request.user
 
-    def get_can_delete(self, instance):
+    def get_can_delete(self, obj):
         request = self.context.get('request')
-        return instance.user == request.user
-
-    def create(self, validated_data):
-        tagged_pets = validated_data.pop('tagged_pets', [])
-        post = Post.objects.create(**validated_data)
-        post.tagged_pets.set(tagged_pets)
-        return post
-
-    def update(self, instance, validated_data):
-        tagged_pets = validated_data.pop('tagged_pets', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if tagged_pets is not None:
-            instance.tagged_pets.set(tagged_pets)
-        instance.save()
-        return instance
+        if obj is None:
+            return False
+        return obj.user == request.user
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -75,13 +67,17 @@ class CommentSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def get_can_edit(self, instance):
-        request = self.context.get('request')
-        return instance.user == request.user
+    def get_can_edit(self, obj):
+        request = self.context.get('request', None)
+        if request and hasattr(request, 'user') and request.user:
+            return obj.user == request.user
+        return False
 
     def get_can_delete(self, instance):
-        request = self.context.get('request')
-        return instance.user == request.user or instance.post.user == request.user
+        request = self.context.get('request', None)
+        if request and hasattr(request, 'user') and request.user:
+            return instance.user == request.user or (hasattr(instance, 'post') and instance.post.user == request.user)
+        return False
 
 
 class LikeSerializer(serializers.ModelSerializer):
