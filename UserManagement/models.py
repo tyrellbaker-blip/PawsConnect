@@ -11,8 +11,6 @@ from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
-
-
 # Constants for choices
 LANGUAGE_CHOICES = [
     ('en', 'English'), ('es', 'Spanish'), ('fr', 'French'),
@@ -112,6 +110,7 @@ def increment_friend_count(user_from, user_to):
     CustomUser.objects.filter(pk=user_from.pk).update(num_friends=F('num_friends') + 1)
     CustomUser.objects.filter(pk=user_to.pk).update(num_friends=F('num_friends') + 1)
 
+
 def decrement_friend_count(user_from, user_to):
     CustomUser.objects.filter(pk=user_from.pk).update(num_friends=F('num_friends') - 1)
     CustomUser.objects.filter(pk=user_to.pk).update(num_friends=F('num_friends') - 1)
@@ -121,6 +120,7 @@ def decrement_friend_count(user_from, user_to):
 def update_friends_count_on_save(sender, instance, created, **kwargs):
     if created and instance.status == 'accepted':
         increment_friend_count(instance.user_from, instance.user_to)
+
 
 @receiver(post_delete, sender=Friendship)
 def update_friends_count_on_delete(sender, instance, **kwargs):

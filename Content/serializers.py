@@ -86,4 +86,4 @@ class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Like
-        fields = ['id', 'post', 'user', 'timestamp', 'updated_at', 'is_active']
+        fields = ['id', 'post', 'user', 'timestamp']
