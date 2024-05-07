@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, Friendship
-from .serializers import CustomUserSerializer, FriendshipSerializer, CompleteProfileSerializer
+
 from .utils import search_users
 
 
@@ -19,6 +19,7 @@ def get_tokens_for_user(user):
 
 
 class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
+    from .serializers import CustomUserSerializer
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
@@ -51,7 +52,6 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retri
                 'username': user.username,
                 'tokens': tokens,
                 'message': "Login successful."
-
             }, status=status.HTTP_200_OK)
         return Response({'error': "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -64,14 +64,13 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retri
     def check_session(self, request):
         return Response({'is_authenticated': request.user.is_authenticated}, status=status.HTTP_200_OK)
 
-    @action(methods=['PUT'], detail=True, url_path='update-profile')
-    def update_profile(self, request, pk=None):
-        user = self.get_object()
-        serializer = CompleteProfileSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     @action(methods=['GET'], detail=False, url_path='search')
     def search(self, request):
@@ -88,6 +87,7 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retri
 
 
 class FriendshipViewSet(viewsets.ModelViewSet):
+    from .serializers import FriendshipSerializer
     queryset = Friendship.objects.all()
     serializer_class = FriendshipSerializer
     permission_classes = [IsAuthenticated]

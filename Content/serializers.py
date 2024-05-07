@@ -1,28 +1,27 @@
 # Content/serializers.py
 from rest_framework import serializers
 
-from PetManagement.models import Pet
-from UserManagement.serializers import CustomUserSerializer
 from .models import Post, Comment, Like
 
 
 class PostSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
-    tagged_pets = serializers.PrimaryKeyRelatedField(
-        queryset=Pet.objects.all(),
-        many=True,
-        required=False
-    )
     visibility = serializers.ChoiceField(choices=Post.VisibilityChoices.choices)
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
     photo = serializers.ImageField(required=False, allow_null=True)
+    user = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'user', 'content', 'photo', 'visibility', 'tagged_pets', 'timestamp', 'updated_at', 'is_active',
-                  'can_edit', 'can_delete']
+        fields = [
+            'id', 'user', 'content', 'photo', 'visibility', 'tagged_pets', 'timestamp', 'updated_at',
+            'is_active', 'can_edit', 'can_delete'
+        ]
         read_only_fields = ['user', 'timestamp', 'updated_at']
+
+    def get_user(self, obj):
+        from UserManagement.serializers import CustomUserSerializer
+        return CustomUserSerializer(obj.user, read_only=True).data
 
     def get_can_edit(self, obj):
         request = self.context.get('request')
@@ -38,34 +37,20 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
     post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
-    tagged_pets = serializers.PrimaryKeyRelatedField(
-        queryset=Pet.objects.all(),
-        many=True,
-        required=False  # Assuming not all comments need pet tags
-    )
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'user', 'content', 'tagged_pets', 'timestamp', 'updated_at', 'is_active']
+        fields = [
+            'id', 'post', 'user', 'content', 'tagged_pets', 'timestamp', 'updated_at', 'is_active'
+        ]
 
-    def create(self, validated_data):
-        tagged_pets = validated_data.pop('tagged_pets', [])
-        comment = Comment.objects.create(**validated_data)
-        comment.tagged_pets.set(tagged_pets)
-        return comment
-
-    def update(self, instance, validated_data):
-        tagged_pets = validated_data.pop('tagged_pets', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if tagged_pets is not None:
-            instance.tagged_pets.set(tagged_pets)
-        instance.save()
-        return instance
+    def get_user(self, obj):
+        from UserManagement.serializers import CustomUserSerializer
+        return CustomUserSerializer(obj.user, read_only=True).data
 
     def get_can_edit(self, obj):
         request = self.context.get('request', None)
@@ -81,9 +66,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
     post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
 
     class Meta:
         model = Like
         fields = ['id', 'post', 'user', 'timestamp']
+
+    def get_user(self, obj):
+        from UserManagement.serializers import CustomUserSerializer
+        return CustomUserSerializer(obj.user, read_only=True).data

@@ -26,20 +26,15 @@ class PetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pet
-        fields = ['id', 'owner', 'name', 'pet_type', 'breed', 'age', 'color', 'profile_picture', 'description',
-                  'can_edit', 'can_transfer']
+        fields = [
+            'id', 'owner', 'name', 'pet_type', 'breed', 'age', 'color', 'profile_picture', 'description',
+            'can_edit', 'can_transfer'
+        ]
         read_only_fields = ['id', 'can_edit', 'can_transfer', 'owner']
-        extra_kwargs = {
-            'breed': {'required': False},
-            'color': {'required': False},
-            'profile_picture': {'required': False},
-        }
 
-    def create(self, validated_data):
-        # Assuming the request user is set as the owner in the view where this serializer is used
-        user = self.context['request'].user
-        pet = Pet.objects.create(owner=user, **validated_data)
-        return pet
+    def get_owner_data(self, instance):
+        from UserManagement.serializers import CustomUserSerializer
+        return CustomUserSerializer(instance.owner).data
 
     def get_can_edit(self, instance):
         return instance.owner == self.context['request'].user

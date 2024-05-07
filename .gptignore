@@ -22,3 +22,4 @@ manage.py
 package-lock.json
 pawsconnect_cert.pem
 pawsconnect_key.pem
+.venv2
