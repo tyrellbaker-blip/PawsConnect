@@ -11,5 +11,5 @@ router.register('likes', LikeViewSet, basename='like')
 app_name = 'content'
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
 ]
