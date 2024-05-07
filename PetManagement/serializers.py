@@ -21,14 +21,14 @@ class PetSerializer(serializers.ModelSerializer):
     pet_type = serializers.CharField()
     can_edit = serializers.SerializerMethodField()
     can_transfer = serializers.SerializerMethodField()
-    profile_picture = serializers.ImageField(required=False)
+    profile_picture = serializers.ImageField(use_url=True, required=False, allow_null=True)
     description = serializers.CharField(required=False)
 
     class Meta:
         model = Pet
-        fields = ['id', 'name', 'pet_type', 'breed', 'age', 'color', 'profile_picture', 'description',
+        fields = ['id', 'owner', 'name', 'pet_type', 'breed', 'age', 'color', 'profile_picture', 'description',
                   'can_edit', 'can_transfer']
-        read_only_fields = ['id', 'can_edit', 'can_transfer']
+        read_only_fields = ['id', 'can_edit', 'can_transfer', 'owner']
         extra_kwargs = {
             'breed': {'required': False},
             'color': {'required': False},

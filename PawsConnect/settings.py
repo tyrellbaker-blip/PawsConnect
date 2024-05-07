@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from datetime import timedelta
 
 from decouple import config
 
@@ -21,7 +22,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = 'media/'
-AUTH_USER_MODEL = "UserManagement.CustomUser"
+
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY')
 
 # Quick-start development settings - unsuitable for production
@@ -44,35 +45,44 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'debug_toolbar',
-    'django.contrib.gis',
-    "Content",
-    "PetManagement",
-    'UserManagement.apps.UserManagementConfig',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'debug_toolbar',
+    'django.contrib.gis',
+    "Content",
+    "PetManagement",
+    'UserManagement',
     'rest_framework',
     'rest_framework_gis',
-    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'corsheaders',
     'django_extensions'
-
 ]
+AUTH_USER_MODEL = "UserManagement.CustomUser"
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 
 ]
-SOCIALACCOUNT_ADAPTER = 'UserManagement.adapter.CustomAccountAdapter'
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1982852),  # Access tokens expire after 15 minutes
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=151),     # Refresh tokens expire after 1 day
+}
+ACCOUNT_ADAPTER = 'UserManagement.adapters.CustomAccountAdapter'
 SITE_ID = 1
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USERNAME_REQUIRED = True
 GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH')
 GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH')
 
@@ -82,24 +92,17 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # Ensure user is authenticated
     'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     'allauth.account.middleware.AccountMiddleware',
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 ]
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8080',
-]
 
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 ROOT_URLCONF = "PawsConnect.urls"
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-}
 
 DATABASES = {
     'default': {
@@ -139,16 +142,19 @@ WSGI_APPLICATION = "PawsConnect.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 9,
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -190,4 +196,3 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_REDIRECT_URL = 'UserManagement:profile'
 LOGOUT_REDIRECT_URL = 'UserManagement:login'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'UserManagement:user_completion'
-

@@ -9,6 +9,6 @@ router.register(r'pet-transfer-requests', PetTransferRequestViewSet, basename='p
 app_name = 'PetManagement'
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
     path('pet/<slug:slug>/profile-picture/', pet_profile_picture, name='pet-profile-picture'),
 ]
