@@ -1,4 +1,7 @@
 from django.contrib.auth import authenticate, logout
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
+from django.db.models import Q
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -6,8 +9,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, Friendship
-
-from .utils import search_users
 
 
 def get_tokens_for_user(user):
@@ -64,25 +65,34 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retri
     def check_session(self, request):
         return Response({'is_authenticated': request.user.is_authenticated}, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        from .serializers import UserSearchSerializer
+        query = request.query_params.get('query')
+        lat = request.query_params.get('lat')
+        lng = request.query_params.get('lng')
+        range_km = request.query_params.get('range')
+
+        queryset = CustomUser.objects.all()
+
+        if query:
+            queryset = queryset.filter(
+                Q(username__icontains=query) | Q(display_name__icontains=query)
+            )
+
+        if lat and lng and range_km:
+            location = Point(float(lng), float(lat), srid=4326)
+            queryset = queryset.filter(location__distance_lte=(location, D(km=range_km)))
+
+        serializer = UserSearchSerializer(queryset, many=True)
+        return Response(serializer.data)
+
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response(serializer.data)
-
-    @action(methods=['GET'], detail=False, url_path='search')
-    def search(self, request):
-        query = request.query_params.get('query')
-        city = request.query_params.get('city')
-        state = request.query_params.get('state')
-        zip_code = request.query_params.get('zip_code')
-        location = request.query_params.get('location')
-        range = request.query_params.get('range')
-
-        users = search_users(query=query, location_point=location, search_range=range)
-        serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
 
 

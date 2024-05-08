@@ -17,8 +17,9 @@ def validate_pet_type(value):
 
 
 class PetSerializer(serializers.ModelSerializer):
-    age = serializers.IntegerField()
-    pet_type = serializers.CharField()
+    name = serializers.CharField(required=True)
+    age = serializers.IntegerField(required=True)
+    pet_type = serializers.ChoiceField(choices=Pet.PetType.choices, required=True)
     can_edit = serializers.SerializerMethodField()
     can_transfer = serializers.SerializerMethodField()
     profile_picture = serializers.ImageField(use_url=True, required=False, allow_null=True)
@@ -28,13 +29,18 @@ class PetSerializer(serializers.ModelSerializer):
         model = Pet
         fields = [
             'id', 'owner', 'name', 'pet_type', 'breed', 'age', 'color', 'profile_picture', 'description',
-            'can_edit', 'can_transfer'
+            'can_edit', 'can_transfer', 'slug'
         ]
-        read_only_fields = ['id', 'can_edit', 'can_transfer', 'owner']
+        read_only_fields = ['id', 'can_edit', 'can_transfer', 'owner', 'slug']
 
     def get_owner_data(self, instance):
         from UserManagement.serializers import CustomUserSerializer
         return CustomUserSerializer(instance.owner).data
+
+    def update(self, instance, validated_data):
+        if instance.owner != self.context['request'].user:
+            raise serializers.ValidationError("You do not have permission to edit this pet.")
+        return super().update(instance, validated_data)
 
     def get_can_edit(self, instance):
         return instance.owner == self.context['request'].user
@@ -95,3 +101,9 @@ class PetTransferRequestDetailSerializer(serializers.ModelSerializer):
         representation['from_user'] = CustomUserSerializer(instance.from_user).data
         representation['to_user'] = CustomUserSerializer(instance.to_user).data
         return representation
+
+
+class PetSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pet
+        fields = ['id', 'name']

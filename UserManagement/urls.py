@@ -19,5 +19,7 @@ urlpatterns = [
     path('login/', UserViewSet.as_view({'post': 'login'}), name='login'),
     path('logout/', UserViewSet.as_view({'post': 'logout'}), name='logout'),
     path('check-session/', UserViewSet.as_view({'get': 'check_session'}), name='check_session'),
-    path('update-profile/<int:pk>/', UserViewSet.as_view({'put': 'update_profile'}), name='update_profile'),
+    path('update-profile/<int:pk>/', UserViewSet.as_view({'patch': 'update'}), name='update_profile'),
+    path('search/', UserViewSet.as_view({'get': 'search'}), name='search'),
+
 ]

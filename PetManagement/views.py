@@ -14,7 +14,21 @@ class PetViewSet(viewsets.ModelViewSet):
     serializer_class = PetSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerPermission]
 
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        from PetManagement.serializers import PetSearchSerializer
+        pet_id = request.query_params.get('pet_id')
+        pet_name = request.query_params.get('pet_name')
 
+        queryset = Pet.objects.all()
+
+        if pet_id:
+            queryset = queryset.filter(id=pet_id)
+        if pet_name:
+            queryset = queryset.filter(name__icontains=pet_name)
+
+        serializer = PetSearchSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         """ Custom implementation to delete a pet only if certain conditions are met. """
