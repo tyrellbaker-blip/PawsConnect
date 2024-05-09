@@ -14,12 +14,11 @@ def validate_image(file):
 
 class Post(models.Model):
     class VisibilityChoices(models.TextChoices):
-        PUBLIC = 'Public', _('Public')
-        FRIENDS_ONLY = 'Friends Only', _('Friends Only')
+        PUBLIC = 'public', _('public')
+        FRIENDS_ONLY = 'friends_only', _('friends only')
 
     user = models.ForeignKey('UserManagement.CustomUser', on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
-    photo = models.ImageField(upload_to='post_photos/', null=True, blank=True, validators=[validate_image])
     visibility = models.CharField(max_length=20, choices=VisibilityChoices.choices, default=VisibilityChoices.PUBLIC)
     tagged_pets = models.ManyToManyField('PetManagement.Pet', related_name='tagged_in_posts', blank=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)

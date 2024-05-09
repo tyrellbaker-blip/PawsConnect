@@ -47,6 +47,8 @@ class PetViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 class PetTransferRequestViewSet(viewsets.ModelViewSet):
     queryset = PetTransferRequest.objects.all()
